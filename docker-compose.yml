@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.15.1
+    container_name: material-matcher-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"  # Ограничиваем память для слабых машин
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - material-matcher-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Опционально: Kibana для визуализации данных
+  kibana:
+    image: kibana:8.15.1
+    container_name: material-matcher-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - material-matcher-network
+    restart: unless-stopped
+    profiles:
+      - with-kibana  # Запускается только при указании профиля
+
+volumes:
+  elasticsearch_data:
+    driver: local
+
+networks:
+  material-matcher-network:
+    driver: bridge

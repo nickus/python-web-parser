@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\Users\\uzun.a.i\\PycharmProjects\\PythonProject\\.idea/**)",
+      "Read(/C:\\Users\\uzun.a.i\\PycharmProjects\\PythonProject\\.venv/**)",
+      "Read(/C:\\Users\\uzun.a.i\\PycharmProjects\\PythonProject\\.venv/**)",
+      "Read(/C:\\Users\\uzun.a.i\\PycharmProjects\\PythonProject\\.claude/**)",
+      "Read(/C:\\Users\\uzun.a.i\\PycharmProjects\\PythonProject\\.claude/**)",
+      "Read(/C:\\Users\\uzun.a.i\\PycharmProjects\\PythonProject\\.venv/**)",
+      "Bash(pip install:*)",
+      "Bash(docker:*)",
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
