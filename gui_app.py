@@ -121,141 +121,56 @@ class MaterialMatcherGUI:
         self.notebook = ttk.Notebook(main_frame)
         self.notebook.pack(fill=tk.BOTH, expand=True)
         
-        # Вкладка "Быстрый старт"
-        self.create_quickstart_tab()
-        
-        # Вкладка "Загрузка данных"
-        self.create_data_tab()
-        
-        # Вкладка "Сопоставление"
-        self.create_matching_tab()
+        # Главная вкладка (объединенные загрузка и сопоставление)
+        self.create_main_tab()
         
         # Вкладка "Результаты"
         self.create_results_tab()
         
-        # Вкладка "Поиск"
-        self.create_search_tab()
-        
         # Статусная панель
         self.create_status_bar()
     
-    def create_quickstart_tab(self):
-        """Вкладка быстрого старта"""
-        tab = ttk.Frame(self.notebook)
-        self.notebook.add(tab, text="🚀 Быстрый старт")
-        
-        # Заголовок
-        title = ttk.Label(tab, text="Добро пожаловать в систему сопоставления материалов!", 
-                         font=('Arial', 16, 'bold'))
-        title.pack(pady=20)
-        
-        # Статус Elasticsearch
-        status_frame = ttk.LabelFrame(tab, text="Статус системы", padding=10)
-        status_frame.pack(fill=tk.X, padx=20, pady=10)
-        
-        self.es_status_label = ttk.Label(status_frame, text="Проверка подключения к Elasticsearch...", 
-                                        font=('Arial', 10))
-        self.es_status_label.pack()
-        
-        ttk.Button(status_frame, text="Проверить подключение", 
-                  command=self.check_elasticsearch).pack(pady=5)
-        
-        # Быстрые действия
-        actions_frame = ttk.LabelFrame(tab, text="Быстрые действия", padding=10)
-        actions_frame.pack(fill=tk.X, padx=20, pady=10)
-        
-        actions_grid = ttk.Frame(actions_frame)
-        actions_grid.pack()
-        
-        # Первая строка кнопок
-        row1 = ttk.Frame(actions_grid)
-        row1.pack(fill=tk.X, pady=5)
-        
-        ttk.Button(row1, text="📁 Загрузить материалы", 
-                  command=self.load_materials_file, width=20).pack(side=tk.LEFT, padx=5)
-        ttk.Button(row1, text="💰 Загрузить прайс-лист", 
-                  command=self.load_pricelist_file, width=20).pack(side=tk.LEFT, padx=5)
-        ttk.Button(row1, text="🔧 Создать индексы", 
-                  command=self.setup_indices, width=20).pack(side=tk.LEFT, padx=5)
-        
-        # Вторая строка кнопок
-        row2 = ttk.Frame(actions_grid)
-        row2.pack(fill=tk.X, pady=5)
-        
-        ttk.Button(row2, text="▶️ Запустить сопоставление", 
-                  command=self.run_full_matching, width=20).pack(side=tk.LEFT, padx=5)
-        ttk.Button(row2, text="🔍 Поиск материала", 
-                  command=lambda: self.notebook.select(4), width=20).pack(side=tk.LEFT, padx=5)  # Переход к вкладке поиска
-        ttk.Button(row2, text="📊 Просмотр результатов", 
-                  command=lambda: self.notebook.select(3), width=20).pack(side=tk.LEFT, padx=5)  # Переход к результатам
-        
-        # Информация о системе
-        info_frame = ttk.LabelFrame(tab, text="Информация", padding=10)
-        info_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-        
-        info_text = """
-🎯 Система сопоставления материалов помогает найти соответствия между:
-   • Вашими материалами (каталог, база данных)
-   • Прайс-листами поставщиков
-
-📈 Алгоритм использует многокритериальный анализ:
-   • Название материала (вес 40%)
-   • Описание (вес 20%)
-   • Категория (вес 15%)
-   • Бренд (вес 15%)
-   • Технические характеристики (вес 10%)
-
-🔧 Для работы требуется Elasticsearch (можно запустить в Docker):
-   docker run -d --name elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:8.15.1
-
-📁 Поддерживаемые форматы файлов: CSV, Excel (.xlsx), JSON
-📋 Форматы экспорта: JSON, CSV, Excel (.xlsx)
-        """
-        
-        info_label = ttk.Label(info_frame, text=info_text.strip(), justify=tk.LEFT, 
-                              font=('Arial', 9))
-        info_label.pack(anchor=tk.W)
     
-    def create_data_tab(self):
-        """Вкладка загрузки данных"""
+    def create_main_tab(self):
+        """Главная вкладка - загрузка данных и сопоставление"""
         tab = ttk.Frame(self.notebook)
-        self.notebook.add(tab, text="📁 Загрузка данных")
+        self.notebook.add(tab, text="📁 Загрузка и сопоставление")
+        
+        # === СЕКЦИЯ ЗАГРУЗКИ ДАННЫХ ===
         
         # Материалы
         materials_frame = ttk.LabelFrame(tab, text="Файл материалов", padding=10)
-        materials_frame.pack(fill=tk.X, padx=10, pady=5)
+        materials_frame.pack(fill=tk.X, padx=10, pady=2)
         
         materials_row = ttk.Frame(materials_frame)
         materials_row.pack(fill=tk.X)
         
         self.materials_path_var = tk.StringVar()
-        ttk.Entry(materials_row, textvariable=self.materials_path_var, width=60).pack(side=tk.LEFT, padx=(0,5))
-        ttk.Button(materials_row, text="Обзор...", command=self.load_materials_file).pack(side=tk.LEFT, padx=5)
-        ttk.Button(materials_row, text="Загрузить", command=self.load_materials_data).pack(side=tk.LEFT, padx=5)
+        ttk.Button(materials_row, text="📁 Выбрать и загрузить материалы", 
+                  command=self.load_materials_auto, width=30).pack(side=tk.LEFT, padx=5)
         
-        self.materials_info_label = ttk.Label(materials_frame, text="Материалы не загружены", 
+        self.materials_info_label = ttk.Label(materials_row, text="Материалы не загружены", 
                                              foreground="red")
-        self.materials_info_label.pack(anchor=tk.W, pady=(5,0))
+        self.materials_info_label.pack(side=tk.LEFT, padx=(10,0))
         
         # Прайс-лист
         pricelist_frame = ttk.LabelFrame(tab, text="Файл прайс-листа", padding=10)
-        pricelist_frame.pack(fill=tk.X, padx=10, pady=5)
+        pricelist_frame.pack(fill=tk.X, padx=10, pady=2)
         
         pricelist_row = ttk.Frame(pricelist_frame)
         pricelist_row.pack(fill=tk.X)
         
         self.pricelist_path_var = tk.StringVar()
-        ttk.Entry(pricelist_row, textvariable=self.pricelist_path_var, width=60).pack(side=tk.LEFT, padx=(0,5))
-        ttk.Button(pricelist_row, text="Обзор...", command=self.load_pricelist_file).pack(side=tk.LEFT, padx=5)
-        ttk.Button(pricelist_row, text="Загрузить", command=self.load_pricelist_data).pack(side=tk.LEFT, padx=5)
+        ttk.Button(pricelist_row, text="📄 Выбрать и загрузить прайс-лист", 
+                  command=self.load_pricelist_auto, width=30).pack(side=tk.LEFT, padx=5)
         
-        self.pricelist_info_label = ttk.Label(pricelist_frame, text="Прайс-лист не загружен", 
+        self.pricelist_info_label = ttk.Label(pricelist_row, text="Прайс-лист не загружен", 
                                              foreground="red")
-        self.pricelist_info_label.pack(anchor=tk.W, pady=(5,0))
+        self.pricelist_info_label.pack(side=tk.LEFT, padx=(10,0))
         
-        # Предварительный просмотр
-        preview_frame = ttk.LabelFrame(tab, text="Предварительный просмотр", padding=10)
-        preview_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        # Предварительный просмотр (компактный)
+        preview_frame = ttk.LabelFrame(tab, text="Предварительный просмотр", padding=5)
+        preview_frame.pack(fill=tk.X, padx=10, pady=2)
         
         # Создаем Treeview для предпросмотра
         preview_notebook = ttk.Notebook(preview_frame)
@@ -265,7 +180,7 @@ class MaterialMatcherGUI:
         materials_preview_frame = ttk.Frame(preview_notebook)
         preview_notebook.add(materials_preview_frame, text="Материалы")
         
-        self.materials_tree = ttk.Treeview(materials_preview_frame, height=8)
+        self.materials_tree = ttk.Treeview(materials_preview_frame, height=4)
         materials_scrollbar = ttk.Scrollbar(materials_preview_frame, orient=tk.VERTICAL, 
                                            command=self.materials_tree.yview)
         self.materials_tree.configure(yscrollcommand=materials_scrollbar.set)
@@ -277,7 +192,7 @@ class MaterialMatcherGUI:
         pricelist_preview_frame = ttk.Frame(preview_notebook)
         preview_notebook.add(pricelist_preview_frame, text="Прайс-лист")
         
-        self.pricelist_tree = ttk.Treeview(pricelist_preview_frame, height=8)
+        self.pricelist_tree = ttk.Treeview(pricelist_preview_frame, height=4)
         pricelist_scrollbar = ttk.Scrollbar(pricelist_preview_frame, orient=tk.VERTICAL, 
                                            command=self.pricelist_tree.yview)
         self.pricelist_tree.configure(yscrollcommand=pricelist_scrollbar.set)
@@ -285,7 +200,7 @@ class MaterialMatcherGUI:
         self.pricelist_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         pricelist_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Кнопки действий
+        # Кнопки действий загрузки
         actions_frame = ttk.Frame(tab)
         actions_frame.pack(fill=tk.X, padx=10, pady=5)
         
@@ -293,11 +208,8 @@ class MaterialMatcherGUI:
                   command=self.index_data).pack(side=tk.LEFT, padx=5)
         ttk.Button(actions_frame, text="Очистить данные", 
                   command=self.clear_data).pack(side=tk.LEFT, padx=5)
-    
-    def create_matching_tab(self):
-        """Вкладка сопоставления"""
-        tab = ttk.Frame(self.notebook)
-        self.notebook.add(tab, text="⚙️ Сопоставление")
+        
+        # === СЕКЦИЯ СОПОСТАВЛЕНИЯ ===
         
         # Параметры сопоставления
         params_frame = ttk.LabelFrame(tab, text="Параметры сопоставления", padding=10)
@@ -337,7 +249,7 @@ class MaterialMatcherGUI:
                                   textvariable=self.workers_var)
         workers_spin.pack(side=tk.LEFT, padx=10)
         
-        # Кнопки управления
+        # Кнопки управления сопоставлением
         control_frame = ttk.Frame(tab)
         control_frame.pack(fill=tk.X, padx=10, pady=5)
         
@@ -363,7 +275,7 @@ class MaterialMatcherGUI:
         log_frame = ttk.LabelFrame(tab, text="Журнал выполнения", padding=10)
         log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        self.log_text = scrolledtext.ScrolledText(log_frame, height=15, wrap=tk.WORD)
+        self.log_text = scrolledtext.ScrolledText(log_frame, height=8, wrap=tk.WORD)
         self.log_text.pack(fill=tk.BOTH, expand=True)
     
     def create_results_tab(self):
@@ -465,75 +377,6 @@ class MaterialMatcherGUI:
         ttk.Button(export_frame, text="🔄 Обновить", 
                   command=self.refresh_results).pack(side=tk.RIGHT, padx=5)
     
-    def create_search_tab(self):
-        """Вкладка поиска"""
-        tab = ttk.Frame(self.notebook)
-        self.notebook.add(tab, text="🔍 Поиск")
-        
-        # Поиск материала
-        search_frame = ttk.LabelFrame(tab, text="Поиск материала", padding=10)
-        search_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        search_row = ttk.Frame(search_frame)
-        search_row.pack(fill=tk.X)
-        
-        ttk.Label(search_row, text="Название материала:").pack(side=tk.LEFT)
-        self.search_var = tk.StringVar()
-        search_entry = ttk.Entry(search_row, textvariable=self.search_var, width=40)
-        search_entry.pack(side=tk.LEFT, padx=10, fill=tk.X, expand=True)
-        search_entry.bind('<Return>', lambda e: self.search_material())
-        
-        ttk.Button(search_row, text="🔍 Найти", command=self.search_material).pack(side=tk.LEFT, padx=5)
-        
-        # Количество результатов
-        results_row = ttk.Frame(search_frame)
-        results_row.pack(fill=tk.X, pady=(5,0))
-        
-        ttk.Label(results_row, text="Показать результатов:").pack(side=tk.LEFT)
-        self.search_limit_var = tk.IntVar(value=10)
-        ttk.Spinbox(results_row, from_=1, to=50, width=10, 
-                   textvariable=self.search_limit_var).pack(side=tk.LEFT, padx=10)
-        
-        # Результаты поиска
-        search_results_frame = ttk.LabelFrame(tab, text="Результаты поиска", padding=10)
-        search_results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
-        
-        # Создаем дерево для результатов поиска
-        search_columns = ("match_name", "similarity", "price", "supplier", "category")
-        self.search_tree = ttk.Treeview(search_results_frame, columns=search_columns, 
-                                       show="tree headings", height=15)
-        
-        # Настраиваем заголовки поиска
-        self.search_tree.heading("#0", text="№")
-        self.search_tree.heading("match_name", text="Найденный материал")
-        self.search_tree.heading("similarity", text="Похожесть, %")
-        self.search_tree.heading("price", text="Цена")
-        self.search_tree.heading("supplier", text="Поставщик")
-        self.search_tree.heading("category", text="Категория")
-        
-        # Настраиваем ширину колонок поиска
-        self.search_tree.column("#0", width=50, minwidth=30)
-        self.search_tree.column("match_name", width=250, minwidth=200)
-        self.search_tree.column("similarity", width=100, minwidth=80)
-        self.search_tree.column("price", width=100, minwidth=80)
-        self.search_tree.column("supplier", width=150, minwidth=100)
-        self.search_tree.column("category", width=120, minwidth=80)
-        
-        # Скроллбары для поиска
-        search_v_scroll = ttk.Scrollbar(search_results_frame, orient=tk.VERTICAL, 
-                                       command=self.search_tree.yview)
-        search_h_scroll = ttk.Scrollbar(search_results_frame, orient=tk.HORIZONTAL, 
-                                       command=self.search_tree.xview)
-        self.search_tree.configure(yscrollcommand=search_v_scroll.set, 
-                                  xscrollcommand=search_h_scroll.set)
-        
-        # Размещение поиска
-        self.search_tree.grid(row=0, column=0, sticky="nsew")
-        search_v_scroll.grid(row=0, column=1, sticky="ns")
-        search_h_scroll.grid(row=1, column=0, sticky="ew")
-        
-        search_results_frame.grid_rowconfigure(0, weight=1)
-        search_results_frame.grid_columnconfigure(0, weight=1)
     
     def create_status_bar(self):
         """Создание статусной панели"""
@@ -576,7 +419,6 @@ class MaterialMatcherGUI:
         if connected:
             self.es_indicator.config(foreground="green")
             self.es_status_text.config(text="Elasticsearch: Подключен")
-            self.es_status_label.config(text="✅ Elasticsearch подключен успешно!", foreground="green")
             self.start_button.config(state="normal" if self.materials and self.price_items else "disabled")
         else:
             self.es_indicator.config(foreground="red")
@@ -584,7 +426,6 @@ class MaterialMatcherGUI:
             error_msg = f"❌ Elasticsearch недоступен"
             if error:
                 error_msg += f": {error}"
-            self.es_status_label.config(text=error_msg, foreground="red")
             self.start_button.config(state="disabled")
     
     def check_elasticsearch(self):
@@ -630,6 +471,22 @@ class MaterialMatcherGUI:
         if filename:
             self.materials_path_var.set(filename)
     
+    def load_materials_auto(self):
+        """Выбор и автоматическая загрузка файла материалов"""
+        filename = filedialog.askopenfilename(
+            title="Выберите файл материалов",
+            filetypes=[
+                ("Все поддерживаемые", "*.csv;*.xlsx;*.json"),
+                ("CSV файлы", "*.csv"),
+                ("Excel файлы", "*.xlsx"),
+                ("JSON файлы", "*.json"),
+                ("Все файлы", "*.*")
+            ]
+        )
+        if filename:
+            self.materials_path_var.set(filename)
+            self.load_materials_data()  # Автоматически загружаем после выбора
+    
     def load_pricelist_file(self):
         """Выбор файла прайс-листа"""
         filename = filedialog.askopenfilename(
@@ -644,6 +501,22 @@ class MaterialMatcherGUI:
         )
         if filename:
             self.pricelist_path_var.set(filename)
+    
+    def load_pricelist_auto(self):
+        """Выбор и автоматическая загрузка файла прайс-листа"""
+        filename = filedialog.askopenfilename(
+            title="Выберите файл прайс-листа",
+            filetypes=[
+                ("Все поддерживаемые", "*.csv;*.xlsx;*.json"),
+                ("CSV файлы", "*.csv"),
+                ("Excel файлы", "*.xlsx"),
+                ("JSON файлы", "*.json"),
+                ("Все файлы", "*.*")
+            ]
+        )
+        if filename:
+            self.pricelist_path_var.set(filename)
+            self.load_pricelist_data()  # Автоматически загружаем после выбора
     
     def load_materials_data(self):
         """Загрузка данных материалов"""
@@ -976,7 +849,7 @@ class MaterialMatcherGUI:
                     self.results = results
                     self.root.after(0, lambda: self.update_results_display())
                     self.root.after(0, lambda: self.log_message("✅ Сопоставление завершено успешно!"))
-                    self.root.after(0, lambda: self.notebook.select(3))  # Переходим к результатам
+                    self.root.after(0, lambda: self.notebook.select(1))  # Переходим к результатам
                 else:
                     self.root.after(0, lambda: self.log_message("⏹ Сопоставление отменено пользователем"))
                 
