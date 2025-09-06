@@ -537,9 +537,10 @@ class MaterialMatcherGUI:
                     # Сохраняем исходный порядок материалов
                     self.materials_order = [material.id for material in materials]
                     self.root.after(0, lambda: self.update_materials_info(len(materials)))
-                    self.root.after(0, lambda: self.update_materials_preview(materials))
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     self.root.after(0, self.update_start_button_state)
+                    # Обновляем предпросмотр с небольшой задержкой для улучшения восприятия скорости
+                    self.root.after(100, lambda: self.update_materials_preview(materials))
                 else:
                     self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить материалы"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
@@ -566,9 +567,10 @@ class MaterialMatcherGUI:
                 if price_items:
                     self.price_items = price_items
                     self.root.after(0, lambda: self.update_pricelist_info(len(price_items)))
-                    self.root.after(0, lambda: self.update_pricelist_preview(price_items))
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     self.root.after(0, self.update_start_button_state)
+                    # Обновляем предпросмотр с небольшой задержкой для улучшения восприятия скорости
+                    self.root.after(100, lambda: self.update_pricelist_preview(price_items))
                 else:
                     self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить прайс-лист"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
@@ -655,84 +657,94 @@ class MaterialMatcherGUI:
         self.pricelist_info_label.config(text=f"Загружено {count} позиций", foreground="green")
     
     def update_materials_preview(self, materials):
-        """Обновление предварительного просмотра материалов"""
+        """Быстрое обновление предварительного просмотра материалов"""
         # Очищаем дерево
         for item in self.materials_tree.get_children():
             self.materials_tree.delete(item)
         
-        # Настраиваем колонки
-        columns = ("name", "category", "brand", "description")
-        self.materials_tree["columns"] = columns
-        self.materials_tree["show"] = "headings"
+        # Настраиваем колонки только если еще не настроены
+        if not self.materials_tree["columns"]:
+            columns = ("name", "category", "brand", "description")
+            self.materials_tree["columns"] = columns
+            self.materials_tree["show"] = "headings"
+            
+            # Заголовки
+            self.materials_tree.heading("name", text="Название")
+            self.materials_tree.heading("category", text="Категория") 
+            self.materials_tree.heading("brand", text="Бренд")
+            self.materials_tree.heading("description", text="Описание")
+            
+            # Ширина колонок
+            self.materials_tree.column("name", width=200, minwidth=150)
+            self.materials_tree.column("category", width=120, minwidth=80)
+            self.materials_tree.column("brand", width=120, minwidth=80)
+            self.materials_tree.column("description", width=300, minwidth=200)
         
-        # Заголовки
-        self.materials_tree.heading("name", text="Название")
-        self.materials_tree.heading("category", text="Категория")
-        self.materials_tree.heading("brand", text="Бренд")
-        self.materials_tree.heading("description", text="Описание")
+        # Отключаем обновление виджета для ускорения
+        self.materials_tree.update_idletasks()
         
-        # Ширина колонок
-        self.materials_tree.column("name", width=200, minwidth=150)
-        self.materials_tree.column("category", width=120, minwidth=80)
-        self.materials_tree.column("brand", width=120, minwidth=80)
-        self.materials_tree.column("description", width=300, minwidth=200)
-        
-        # Добавляем первые 100 материалов для предпросмотра
-        for material in materials[:100]:
-            desc = material.description[:100] + "..." if len(material.description) > 100 else material.description
+        # Добавляем только первые 20 материалов для быстрого предпросмотра
+        for material in materials[:20]:
+            desc = (material.description[:50] + "...") if len(material.description) > 50 else material.description
             self.materials_tree.insert("", tk.END, values=(
-                material.name,
-                material.category or "",
-                material.brand or "",
+                material.name[:30],  # Ограничиваем длину названия
+                (material.category or "")[:15],
+                (material.brand or "")[:15], 
                 desc
             ))
         
-        if len(materials) > 100:
+        # Показываем сообщение если материалов больше 20
+        if len(materials) > 20:
             self.materials_tree.insert("", tk.END, values=(
-                f"... и еще {len(materials) - 100} материалов",
+                f"... и еще {len(materials) - 20} материалов",
                 "", "", ""
             ))
     
     def update_pricelist_preview(self, price_items):
-        """Обновление предварительного просмотра прайс-листа"""
+        """Быстрое обновление предварительного просмотра прайс-листа"""
         # Очищаем дерево
         for item in self.pricelist_tree.get_children():
             self.pricelist_tree.delete(item)
         
-        # Настраиваем колонки
-        columns = ("name", "price", "supplier", "category", "description")
-        self.pricelist_tree["columns"] = columns
-        self.pricelist_tree["show"] = "headings"
+        # Настраиваем колонки только если еще не настроены
+        if not self.pricelist_tree["columns"]:
+            columns = ("name", "price", "supplier", "category", "description")
+            self.pricelist_tree["columns"] = columns
+            self.pricelist_tree["show"] = "headings"
+            
+            # Заголовки
+            self.pricelist_tree.heading("name", text="Материал")
+            self.pricelist_tree.heading("price", text="Цена")
+            self.pricelist_tree.heading("supplier", text="Поставщик")
+            self.pricelist_tree.heading("category", text="Категория")
+            self.pricelist_tree.heading("description", text="Описание")
+            
+            # Ширина колонок
+            self.pricelist_tree.column("name", width=200, minwidth=150)
+            self.pricelist_tree.column("price", width=100, minwidth=80)
+            self.pricelist_tree.column("supplier", width=150, minwidth=100)
+            self.pricelist_tree.column("category", width=120, minwidth=80)
+            self.pricelist_tree.column("description", width=250, minwidth=200)
         
-        # Заголовки
-        self.pricelist_tree.heading("name", text="Материал")
-        self.pricelist_tree.heading("price", text="Цена")
-        self.pricelist_tree.heading("supplier", text="Поставщик")
-        self.pricelist_tree.heading("category", text="Категория")
-        self.pricelist_tree.heading("description", text="Описание")
+        # Отключаем обновление виджета для ускорения
+        self.pricelist_tree.update_idletasks()
         
-        # Ширина колонок
-        self.pricelist_tree.column("name", width=200, minwidth=150)
-        self.pricelist_tree.column("price", width=100, minwidth=80)
-        self.pricelist_tree.column("supplier", width=150, minwidth=100)
-        self.pricelist_tree.column("category", width=120, minwidth=80)
-        self.pricelist_tree.column("description", width=250, minwidth=200)
-        
-        # Добавляем первые 100 позиций для предпросмотра
-        for item in price_items[:100]:
-            desc = item.description[:100] + "..." if len(item.description) > 100 else item.description
+        # Добавляем только первые 20 позиций для быстрого предпросмотра
+        for item in price_items[:20]:
+            desc = (item.description[:50] + "...") if len(item.description) > 50 else item.description
             price_str = f"{item.price} {item.currency}" if item.price else "Не указана"
             self.pricelist_tree.insert("", tk.END, values=(
-                item.material_name,
+                item.material_name[:30],  # Ограничиваем длину названия
                 price_str,
-                item.supplier or "",
-                item.category or "",
+                (item.supplier or "")[:15],
+                (item.category or "")[:15],
                 desc
             ))
         
-        if len(price_items) > 100:
+        # Показываем сообщение если позиций больше 20
+        if len(price_items) > 20:
             self.pricelist_tree.insert("", tk.END, values=(
-                f"... и еще {len(price_items) - 100} позиций",
+                f"... и еще {len(price_items) - 20} позиций",
                 "", "", "", ""
             ))
     
