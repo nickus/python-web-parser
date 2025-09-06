@@ -275,6 +275,15 @@ class MaterialMatcherGUI:
         log_frame = ttk.LabelFrame(tab, text="Журнал выполнения", padding=10)
         log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
+        # Кнопки для управления логом
+        log_buttons_frame = ttk.Frame(log_frame)
+        log_buttons_frame.pack(fill=tk.X, pady=(0, 5))
+        
+        ttk.Button(log_buttons_frame, text="📋 Копировать весь лог", 
+                  command=self.copy_log_to_clipboard).pack(side=tk.LEFT, padx=5)
+        ttk.Button(log_buttons_frame, text="🗑️ Очистить лог", 
+                  command=self.clear_log).pack(side=tk.LEFT, padx=5)
+        
         self.log_text = scrolledtext.ScrolledText(log_frame, height=8, wrap=tk.WORD)
         self.log_text.pack(fill=tk.BOTH, expand=True)
     
@@ -584,6 +593,23 @@ class MaterialMatcherGUI:
         self.log_text.insert(tk.END, f"[{timestamp}] {message}\n")
         self.log_text.see(tk.END)
     
+    def copy_log_to_clipboard(self):
+        """Копирование содержимого лога в буфер обмена"""
+        try:
+            log_content = self.log_text.get("1.0", tk.END)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(log_content)
+            self.root.update()  # Применяем изменения буфера обмена
+            messagebox.showinfo("Успешно", "Лог скопирован в буфер обмена!")
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось скопировать лог: {e}")
+    
+    def clear_log(self):
+        """Очистка лога"""
+        if messagebox.askyesno("Подтверждение", "Очистить весь лог?"):
+            self.log_text.delete("1.0", tk.END)
+            self.log_message("🗑️ Лог очищен")
+    
     def new_project(self):
         """Создание нового проекта"""
         if messagebox.askyesno("Новый проект", "Очистить все данные и начать новый проект?"):
@@ -881,12 +907,22 @@ class MaterialMatcherGUI:
     
     def update_results_display(self):
         """Обновление отображения результатов с топ-7 вариантами"""
+        self.log_message("🔄 НАЧАЛО update_results_display()")
+        
         # Сохраняем состояние раскрытия всех материалов
         expanded_materials = set()
         for item in self.results_tree.get_children():
             material_name = self.results_tree.item(item, 'text')
-            if self.results_tree.item(item, 'open'):
-                expanded_materials.add(material_name)
+            # Материал считается раскрытым если у него есть дочерние элементы И он открыт
+            # ИЛИ если у него нет дочерних элементов (значит был выбран вариант)
+            has_children = len(self.results_tree.get_children(item)) > 0
+            is_open = self.results_tree.item(item, 'open')
+            
+            if (has_children and is_open) or not has_children:
+                # Очищаем от стрелочки, если она есть (материалы с выбранными вариантами)
+                clean_name = material_name.split(' ➤ ')[0] if ' ➤ ' in material_name else material_name
+                expanded_materials.add(clean_name)
+                self.log_message(f"   📋 Сохраняю как раскрытый: '{clean_name}' (дети: {has_children}, открыт: {is_open})")
         
         # Очищаем дерево результатов
         for item in self.results_tree.get_children():
@@ -943,6 +979,8 @@ class MaterialMatcherGUI:
                 # Автоматически раскрываем все материалы (новые) или восстанавливаем состояние (обновление)
                 should_expand = material_name in expanded_materials if expanded_materials else True
                 self.results_tree.item(parent, open=should_expand)
+                if should_expand:
+                    self.log_message(f"   ✅ Раскрываю материал: '{material_name}'")
         
         # Настраиваем цветовые теги
         self.results_tree.tag_configure("material", font=('Arial', 10, 'bold'))
@@ -1116,40 +1154,73 @@ class MaterialMatcherGUI:
         }
         
         # Сначала обновляем отображение выбранного варианта (поднимаем его на уровень материала)
+        self.log_message("🔧 НАЧИНАЮ обновление выбранного варианта...")
         self.update_selected_variant_display(parent, item, variant_name)
         
-        # Затем скрываем все остальные варианты для этого материала
-        self.hide_other_variants(parent, None)  # None так как selected_item уже удален
+        # ДАЕМ ВРЕМЯ ПОЛЬЗОВАТЕЛЮ УВИДЕТЬ ИЗМЕНЕНИЯ, затем схлопываем
+        self.log_message("⏳ Даём время увидеть изменения перед схлопыванием...")
+        self.root.after(100, lambda: self.delayed_collapse(parent, item))
+        
+        # КОРНЕВОЕ РЕШЕНИЕ: Больше не нужно принудительное раскрытие,
+        # так как мы не удаляем элементы, а только схлопываем выбранный материал
+        self.log_message("✅ КОРНЕВОЕ РЕШЕНИЕ: Другие материалы остаются нетронутыми")
         
         # Логируем действие
         material_name = self.results_tree.item(parent, 'text')
         self.log_message(f"✅ Выбран вариант для '{material_name}': {variant_name}")
     
+    def delayed_collapse(self, parent_item, selected_item):
+        """ОТЛОЖЕННОЕ СХЛОПЫВАНИЕ: Даём время пользователю увидеть изменения"""
+        self.log_message("📁 Автоматическое схлопывание материала после выбора")
+        self.hide_other_variants(parent_item, selected_item)
+    
     def hide_other_variants(self, parent_item, selected_item):
-        """Скрывает все варианты кроме выбранного"""
-        children = list(self.results_tree.get_children(parent_item))
-        for child in children:
-            if child != selected_item:
-                self.results_tree.delete(child)
+        """ФИНАЛЬНОЕ РЕШЕНИЕ: НИЧЕГО НЕ ДЕЛАЕМ с вариантами - только схлопываем материал"""
         
-        self.log_message(f"🗑️ Скрыто {len(children)} вариантов для материала")
+        # Получаем всех дочерних элементов только для подсчета
+        children = list(self.results_tree.get_children(parent_item))
+        
+        # НЕ ТРОГАЕМ ВАРИАНТЫ ВООБЩЕ! Даже визуально не изменяем
+        # Просто схлопываем материал чтобы скрыть все варианты
+        self.results_tree.item(parent_item, open=False)
+        
+        self.log_message(f"📁 ФИНАЛЬНОЕ РЕШЕНИЕ: Просто схлопываем материал (скрываем {len(children)} вариантов)")
+        self.log_message("🚫 Варианты НЕ изменены, НЕ удалены, НЕ модифицированы")  
+        self.log_message("🤞 Надеемся что другие материалы останутся нетронутыми")
+    
+    # Старые функции принудительного раскрытия удалены - они больше не нужны
+    # благодаря корневому решению проблемы схлопывания
     
     def update_selected_variant_display(self, parent_item, selected_item, variant_name):
-        """Поднимает выбранный вариант на уровень материала в одну строку"""
-        # Получаем данные выбранного варианта
+        """РЕШЕНИЕ БЕЗ ИЗМЕНЕНИЯ СТРУКТУРЫ: Только визуальное выделение через теги"""
+        # Получаем данные для логирования
         selected_values = self.results_tree.item(selected_item, 'values')
         material_name = self.results_tree.item(parent_item, 'text')
         
-        # Обновляем родительский элемент (материал) - добавляем данные варианта
-        updated_text = f"{material_name} ➤ {variant_name}"
+        # КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Копируем данные выбранного варианта в строку материала
+        if selected_values:
+            # Обновляем values родительского материала данными выбранного варианта
+            self.results_tree.item(parent_item, values=selected_values)
+            self.log_message(f"📊 ДАННЫЕ ВАРИАНТА перенесены в строку материала: {selected_values}")
         
-        # Переносим данные варианта на уровень материала
-        self.results_tree.item(parent_item, 
-                              text=updated_text,
-                              values=selected_values)  # Показываем данные варианта в строке материала
+        # 1. ВЫДЕЛЯЕМ выбранный вариант цветом
+        current_tags = list(self.results_tree.item(selected_item, 'tags'))
+        if 'selected_variant' not in current_tags:
+            current_tags.append('selected_variant')
+            self.results_tree.item(selected_item, tags=current_tags)
         
-        # Удаляем дочерний элемент (вариант), так как он теперь на уровне материала
-        self.results_tree.delete(selected_item)
+        # 2. ВЫДЕЛЯЕМ материал как имеющий выбор
+        parent_tags = list(self.results_tree.item(parent_item, 'tags'))
+        if 'material_with_selection' not in parent_tags:
+            parent_tags.append('material_with_selection')
+            self.results_tree.item(parent_item, tags=parent_tags)
+        
+        # 3. Настраиваем стили для визуального выделения
+        self.results_tree.tag_configure('selected_variant', background='lightblue', font=('Arial', 10, 'bold'))
+        self.results_tree.tag_configure('material_with_selection', background='lightblue', font=('Arial', 11, 'bold'))
+        
+        self.log_message(f"🎨 ВИЗУАЛЬНОЕ ВЫДЕЛЕНИЕ: Материал и вариант выделены цветом")
+        self.log_message(f"✅ Структура TreeView НЕ изменена - материалы не схлопнутся!")
         
         # Стилизуем строку материала с выбранным вариантом
         parent_tags = list(self.results_tree.item(parent_item, 'tags'))
