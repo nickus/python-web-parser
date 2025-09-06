@@ -360,10 +360,6 @@ class MaterialMatcherGUI:
         export_frame = ttk.Frame(tab)
         export_frame.pack(fill=tk.X, padx=10, pady=5)
         
-        ttk.Button(export_frame, text="📄 Экспорт всех результатов (JSON)", 
-                  command=lambda: self.export_results("json")).pack(side=tk.LEFT, padx=5)
-        ttk.Button(export_frame, text="📊 Экспорт всех результатов (CSV)", 
-                  command=lambda: self.export_results("csv")).pack(side=tk.LEFT, padx=5)
         ttk.Button(export_frame, text="📋 Экспорт всех результатов (Excel)", 
                   command=lambda: self.export_results("xlsx")).pack(side=tk.LEFT, padx=5)
         
@@ -885,6 +881,13 @@ class MaterialMatcherGUI:
     
     def update_results_display(self):
         """Обновление отображения результатов с топ-7 вариантами"""
+        # Сохраняем состояние раскрытия всех материалов
+        expanded_materials = set()
+        for item in self.results_tree.get_children():
+            material_name = self.results_tree.item(item, 'text')
+            if self.results_tree.item(item, 'open'):
+                expanded_materials.add(material_name)
+        
         # Очищаем дерево результатов
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
@@ -903,6 +906,10 @@ class MaterialMatcherGUI:
         self.stats_labels["avg_similarity"].config(text=f"{stats['average_relevance']*100:.1f}%")
         
         # Заполняем результаты с топ-7 вариантами для каждого материала
+        # Если нет сохраненного состояния, значит это первый запуск - раскрываем все
+        if not expanded_materials:
+            expanded_materials = set([result["material_name"] for result in formatted_results])
+        
         for result in formatted_results:
             material_name = result["material_name"]
             matches = result["matches"]
@@ -933,13 +940,13 @@ class MaterialMatcherGUI:
                         tags=(tag, f"variant_{result['material_id']}_{match['variant_id']}")
                     )
                 
-                # Автоматически раскрываем первые 5 материалов
-                if formatted_results.index(result) < 5:
-                    self.results_tree.item(parent, open=True)
+                # Автоматически раскрываем все материалы (новые) или восстанавливаем состояние (обновление)
+                should_expand = material_name in expanded_materials if expanded_materials else True
+                self.results_tree.item(parent, open=should_expand)
         
         # Настраиваем цветовые теги
         self.results_tree.tag_configure("material", font=('Arial', 10, 'bold'))
-        self.results_tree.tag_configure("high", foreground="darkgreen")
+        self.results_tree.tag_configure("high", foreground="darkblue")
         self.results_tree.tag_configure("medium", foreground="darkorange")
         self.results_tree.tag_configure("low", foreground="darkred")
         
@@ -1152,9 +1159,9 @@ class MaterialMatcherGUI:
         
         # Настраиваем стиль для материала с выбранным вариантом
         self.results_tree.tag_configure('material_with_selection', 
-                                       background='lightgreen',
+                                       background='lightblue',
                                        font=('Arial', 11, 'bold'),
-                                       foreground='darkgreen')
+                                       foreground='darkblue')
         
         self.log_message(f"📍 Вариант '{variant_name}' поднят на уровень материала")
     
