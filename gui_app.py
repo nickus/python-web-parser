@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from src.material_matcher_app import MaterialMatcherApp
 from src.utils.json_formatter import MatchingResultFormatter
+from src.utils.debug_logger import get_debug_logger, init_debug_logging
 
 
 class MaterialMatcherGUI:
@@ -45,6 +46,10 @@ class MaterialMatcherGUI:
         self.last_click_time = 0
         self.last_click_item = None
         self.double_click_delay = 500  # мсек
+        
+        # Инициализируем систему отладочного логирования
+        init_debug_logging(log_level="INFO")
+        self.debug_logger = get_debug_logger()
         
         # Создаем интерфейс
         self.create_widgets()
@@ -106,6 +111,9 @@ class MaterialMatcherGUI:
         tools_menu.add_command(label="Настройки", command=self.show_settings)
         tools_menu.add_command(label="Проверить Elasticsearch", command=self.check_elasticsearch)
         tools_menu.add_command(label="Создать индексы", command=self.setup_indices)
+        tools_menu.add_separator()
+        tools_menu.add_command(label="📋 Копировать логи отладки", command=self.copy_debug_logs)
+        tools_menu.add_command(label="📄 Показать окно логов", command=self.show_debug_logs_window)
         
         # Меню справка
         help_menu = tk.Menu(menubar, tearoff=0)
@@ -253,11 +261,11 @@ class MaterialMatcherGUI:
         control_frame = ttk.Frame(tab)
         control_frame.pack(fill=tk.X, padx=10, pady=5)
         
-        self.start_button = ttk.Button(control_frame, text="🚀 Запустить сопоставление", 
+        self.start_button = ttk.Button(control_frame, text="[START] Запустить сопоставление", 
                                       command=self.run_full_matching, state="disabled")
         self.start_button.pack(side=tk.LEFT, padx=5)
         
-        self.stop_button = ttk.Button(control_frame, text="⏹ Остановить", 
+        self.stop_button = ttk.Button(control_frame, text="[STOP] Остановить", 
                                      command=self.stop_matching, state="disabled")
         self.stop_button.pack(side=tk.LEFT, padx=5)
         
@@ -375,11 +383,11 @@ class MaterialMatcherGUI:
         # Разделитель
         ttk.Separator(export_frame, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
         
-        ttk.Button(export_frame, text="✅ Экспорт выбранных (Excel)", 
+        ttk.Button(export_frame, text="[OK] Экспорт выбранных (Excel)", 
                   command=lambda: self.export_selected_results("xlsx")).pack(side=tk.LEFT, padx=5)
-        ttk.Button(export_frame, text="🔄 Сбросить выборы", 
+        ttk.Button(export_frame, text="[RESET] Сбросить выборы", 
                   command=self.reset_selections).pack(side=tk.LEFT, padx=5)
-        ttk.Button(export_frame, text="🔄 Обновить", 
+        ttk.Button(export_frame, text="[UPDATE] Обновить", 
                   command=self.refresh_results).pack(side=tk.RIGHT, padx=5)
     
     
@@ -428,7 +436,7 @@ class MaterialMatcherGUI:
         else:
             self.es_indicator.config(foreground="red")
             self.es_status_text.config(text="Elasticsearch: Не подключен")
-            error_msg = f"❌ Elasticsearch недоступен"
+            error_msg = f"[ERROR] Elasticsearch недоступен"
             if error:
                 error_msg += f": {error}"
             self.start_button.config(state="disabled")
@@ -448,13 +456,13 @@ class MaterialMatcherGUI:
                 self.root.after(0, lambda: self.status_var.set("Создание индексов..."))
                 
                 if self.app.setup_indices():
-                    self.root.after(0, lambda: self.log_message("✅ Индексы созданы успешно!"))
+                    self.root.after(0, lambda: self.log_message("[OK] Индексы созданы успешно!"))
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                 else:
-                    self.root.after(0, lambda: self.log_message("❌ Ошибка создания индексов!"))
+                    self.root.after(0, lambda: self.log_message("[ERROR] Ошибка создания индексов!"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
             except Exception as e:
-                self.root.after(0, lambda: self.log_message(f"❌ Ошибка: {e}"))
+                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка: {e}"))
                 self.root.after(0, lambda: self.status_var.set("Ошибка"))
         
         threading.Thread(target=create_indices, daemon=True).start()
@@ -616,7 +624,7 @@ class MaterialMatcherGUI:
             self.clear_data()
             self.results = {}
             self.refresh_results()
-            self.log_message("🔄 Создан новый проект")
+            self.log_message("[INFO] Создан новый проект")
     
     def show_settings(self):
         """Показать окно настроек"""
@@ -804,17 +812,17 @@ class MaterialMatcherGUI:
                     self.app = MaterialMatcherApp(self.config)
                 
                 self.root.after(0, lambda: self.status_var.set("Индексация данных..."))
-                self.root.after(0, lambda: self.log_message("🔄 Начинаем индексацию данных..."))
+                self.root.after(0, lambda: self.log_message("[INFO] Начинаем индексацию данных..."))
                 
                 if self.app.index_data(self.materials, self.price_items):
-                    self.root.after(0, lambda: self.log_message("✅ Данные успешно проиндексированы!"))
+                    self.root.after(0, lambda: self.log_message("[OK] Данные успешно проиндексированы!"))
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     self.root.after(0, self.update_start_button_state)
                 else:
-                    self.root.after(0, lambda: self.log_message("❌ Ошибка индексации данных!"))
+                    self.root.after(0, lambda: self.log_message("[ERROR] Ошибка индексации данных!"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
             except Exception as e:
-                self.root.after(0, lambda: self.log_message(f"❌ Ошибка индексации: {e}"))
+                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка индексации: {e}"))
                 self.root.after(0, lambda: self.status_var.set("Ошибка"))
         
         threading.Thread(target=index, daemon=True).start()
@@ -871,10 +879,10 @@ class MaterialMatcherGUI:
                 # Обновляем UI
                 self.root.after(0, lambda: self.start_button.config(state="disabled"))
                 self.root.after(0, lambda: self.stop_button.config(state="normal"))
-                self.root.after(0, lambda: self.progress_bar.start(10))
+                self.root.after(0, lambda: self.progress_bar.start(10) if hasattr(self, 'progress_bar') and self.progress_bar else None)
                 self.root.after(0, lambda: self.progress_var.set("Запуск сопоставления..."))
                 self.root.after(0, lambda: self.status_var.set("Выполняется сопоставление..."))
-                self.root.after(0, lambda: self.log_message("🚀 Начинаем сопоставление материалов..."))
+                self.root.after(0, lambda: self.log_message("[START] Начинаем сопоставление материалов..."))
                 
                 # Запускаем сопоставление
                 results = self.app.run_matching(self.materials)
@@ -882,18 +890,18 @@ class MaterialMatcherGUI:
                 if not self.matching_cancelled:
                     self.results = results
                     self.root.after(0, lambda: self.update_results_display())
-                    self.root.after(0, lambda: self.log_message("✅ Сопоставление завершено успешно!"))
+                    self.root.after(0, lambda: self.log_message("[OK] Сопоставление завершено успешно!"))
                     self.root.after(0, lambda: self.notebook.select(1))  # Переходим к результатам
                 else:
-                    self.root.after(0, lambda: self.log_message("⏹ Сопоставление отменено пользователем"))
+                    self.root.after(0, lambda: self.log_message("[STOP] Сопоставление отменено пользователем"))
                 
             except Exception as e:
-                self.root.after(0, lambda: self.log_message(f"❌ Ошибка сопоставления: {e}"))
+                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка сопоставления: {e}"))
             finally:
                 # Восстанавливаем UI
                 self.root.after(0, lambda: self.start_button.config(state="normal"))
                 self.root.after(0, lambda: self.stop_button.config(state="disabled"))
-                self.root.after(0, lambda: self.progress_bar.stop())
+                self.root.after(0, lambda: self.progress_bar.stop() if hasattr(self, 'progress_bar') and self.progress_bar else None)
                 self.root.after(0, lambda: self.progress_var.set("Готов к запуску"))
                 self.root.after(0, lambda: self.status_var.set("Готов"))
         
@@ -903,11 +911,11 @@ class MaterialMatcherGUI:
         """Остановка сопоставления"""
         self.matching_cancelled = True
         self.stop_button.config(state="disabled")
-        self.log_message("⏹ Останавливаем сопоставление...")
+        self.log_message("[STOP] Останавливаем сопоставление...")
     
     def update_results_display(self):
         """Обновление отображения результатов с топ-7 вариантами"""
-        self.log_message("🔄 НАЧАЛО update_results_display()")
+        self.log_message("[INFO] НАЧАЛО update_results_display()")
         
         # Сохраняем состояние раскрытия всех материалов
         expanded_materials = set()
@@ -920,7 +928,7 @@ class MaterialMatcherGUI:
             
             if (has_children and is_open) or not has_children:
                 # Очищаем от стрелочки, если она есть (материалы с выбранными вариантами)
-                clean_name = material_name.split(' ➤ ')[0] if ' ➤ ' in material_name else material_name
+                clean_name = material_name.split(' > ')[0] if ' > ' in material_name else material_name
                 expanded_materials.add(clean_name)
                 self.log_message(f"   📋 Сохраняю как раскрытый: '{clean_name}' (дети: {has_children}, открыт: {is_open})")
         
@@ -980,7 +988,7 @@ class MaterialMatcherGUI:
                 should_expand = material_name in expanded_materials if expanded_materials else True
                 self.results_tree.item(parent, open=should_expand)
                 if should_expand:
-                    self.log_message(f"   ✅ Раскрываю материал: '{material_name}'")
+                    self.log_message(f"   [OK] Раскрываю материал: '{material_name}'")
         
         # Настраиваем цветовые теги
         self.results_tree.tag_configure("material", font=('Arial', 10, 'bold'))
@@ -1009,11 +1017,11 @@ class MaterialMatcherGUI:
                         if hasattr(self, 'formatter'):
                             result = self.formatter.select_variant(material_id, variant_id)
                             if 'error' not in result:
-                                self.log_message(f"✅ Выбран вариант {variant_id} для материала {material_id}")
+                                self.log_message(f"[OK] Выбран вариант {variant_id} для материала {material_id}")
                                 # Обновляем визуальное выделение
                                 self.highlight_selected_variant(selection[0])
                             else:
-                                self.log_message(f"❌ Ошибка выбора: {result['error']}")
+                                self.log_message(f"[ERROR] Ошибка выбора: {result['error']}")
     
     def highlight_selected_variant(self, item_id):
         """Визуальное выделение выбранного варианта"""
@@ -1071,7 +1079,7 @@ class MaterialMatcherGUI:
                     self.log_message(f"   Значения: {item_values}")
                     
         except Exception as e:
-            self.log_message(f"❌ Ошибка в обработке клика: {e}")
+            self.log_message(f"[ERROR] Ошибка в обработке клика: {e}")
     
     def handle_double_click(self, event, item):
         """Обработка двойного клика по варианту из прайс-листа"""
@@ -1080,7 +1088,7 @@ class MaterialMatcherGUI:
             column = self.results_tree.identify('column', event.x, event.y)
             
             if not item:
-                self.log_message("❌ Не удалось определить элемент для клика")
+                self.log_message("[ERROR] Не удалось определить элемент для клика")
                 return
             
             # Проверяем, что кликнули по варианту (дочерний элемент), а не по материалу
@@ -1090,9 +1098,9 @@ class MaterialMatcherGUI:
                 return
             
             # Дополнительная отладочная информация
-            self.log_message(f"🔍 Двойной клик: элемент={item}, колонка={column}, родитель={parent}")
+            self.log_message(f"[SEARCH] Двойной клик: элемент={item}, колонка={column}, родитель={parent}")
         except Exception as e:
-            self.log_message(f"❌ Ошибка при обработке клика: {e}")
+            self.log_message(f"[ERROR] Ошибка при обработке клика: {e}")
             return
         
         # Получаем теги элемента для определения material_id и variant_id
@@ -1106,16 +1114,16 @@ class MaterialMatcherGUI:
                 break
         
         if not variant_tag:
-            self.log_message(f"❌ Не найден тег варианта в {tags}")
+            self.log_message(f"[ERROR] Не найден тег варианта в {tags}")
             return
         
-        self.log_message(f"✅ Найден тег варианта: {variant_tag}")
+        self.log_message(f"[OK] Найден тег варианта: {variant_tag}")
         
         # Извлекаем material_id из тега (формат: variant_material_id_variant_id)
         try:
             parts = variant_tag.split('_')
             if len(parts) < 3:
-                self.log_message(f"❌ Неверный формат тега: {variant_tag}")
+                self.log_message(f"[ERROR] Неверный формат тега: {variant_tag}")
                 return
             
             material_id = parts[1]
@@ -1126,12 +1134,12 @@ class MaterialMatcherGUI:
             # Получаем данные выбранного варианта
             values = self.results_tree.item(item, 'values')
             if not values:
-                self.log_message(f"❌ Нет значений для элемента {item}")
+                self.log_message(f"[ERROR] Нет значений для элемента {item}")
                 return
                 
             self.log_message(f"📊 Значения варианта: {values}")
         except Exception as e:
-            self.log_message(f"❌ Ошибка при извлечении данных: {e}")
+            self.log_message(f"[ERROR] Ошибка при извлечении данных: {e}")
             return
         
         variant_name = values[0]  # Название варианта
@@ -1163,11 +1171,11 @@ class MaterialMatcherGUI:
         
         # КОРНЕВОЕ РЕШЕНИЕ: Больше не нужно принудительное раскрытие,
         # так как мы не удаляем элементы, а только схлопываем выбранный материал
-        self.log_message("✅ КОРНЕВОЕ РЕШЕНИЕ: Другие материалы остаются нетронутыми")
+        self.log_message("[OK] КОРНЕВОЕ РЕШЕНИЕ: Другие материалы остаются нетронутыми")
         
         # Логируем действие
         material_name = self.results_tree.item(parent, 'text')
-        self.log_message(f"✅ Выбран вариант для '{material_name}': {variant_name}")
+        self.log_message(f"[OK] Выбран вариант для '{material_name}': {variant_name}")
     
     def delayed_collapse(self, parent_item, selected_item):
         """ОТЛОЖЕННОЕ СХЛОПЫВАНИЕ: Даём время пользователю увидеть изменения"""
@@ -1220,7 +1228,7 @@ class MaterialMatcherGUI:
         self.results_tree.tag_configure('material_with_selection', background='lightblue', font=('Arial', 11, 'bold'))
         
         self.log_message(f"🎨 ВИЗУАЛЬНОЕ ВЫДЕЛЕНИЕ: Материал и вариант выделены цветом")
-        self.log_message(f"✅ Структура TreeView НЕ изменена - материалы не схлопнутся!")
+        self.log_message(f"[OK] Структура TreeView НЕ изменена - материалы не схлопнутся!")
         
         # Стилизуем строку материала с выбранным вариантом
         parent_tags = list(self.results_tree.item(parent_item, 'tags'))
@@ -1240,7 +1248,7 @@ class MaterialMatcherGUI:
         """Обновление результатов"""
         if self.results:
             self.update_results_display()
-            self.log_message("🔄 Результаты обновлены")
+            self.log_message("[INFO] Результаты обновлены")
         else:
             self.log_message("ℹ️ Нет результатов для обновления")
     
@@ -1256,7 +1264,7 @@ class MaterialMatcherGUI:
         # Обновляем отображение результатов
         self.update_results_display()
         
-        self.log_message("🔄 Все выборы сброшены")
+        self.log_message("[INFO] Все выборы сброшены")
     
     def export_selected_results(self, format_type="xlsx"):
         """Экспорт выбранных результатов"""
@@ -1309,12 +1317,12 @@ class MaterialMatcherGUI:
                     from src.utils.data_loader import DataExporter
                     DataExporter.export_results_to_xlsx(selected_data, filename)
                     
-                    self.root.after(0, lambda: self.log_message(f"✅ Выбранные результаты экспортированы в {filename}"))
+                    self.root.after(0, lambda: self.log_message(f"[OK] Выбранные результаты экспортированы в {filename}"))
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     self.root.after(0, lambda: messagebox.showinfo("Экспорт", f"Выбранные результаты сохранены в файл:\n{filename}"))
                     
                 except Exception as e:
-                    self.root.after(0, lambda: self.log_message(f"❌ Ошибка экспорта выбранных: {e}"))
+                    self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка экспорта выбранных: {e}"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
                     self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Ошибка экспорта выбранных результатов: {e}"))
             
@@ -1366,7 +1374,7 @@ class MaterialMatcherGUI:
                             pretty=True
                         )
                         if success:
-                            self.root.after(0, lambda: self.log_message(f"✅ Результаты экспортированы в {filename}"))
+                            self.root.after(0, lambda: self.log_message(f"[OK] Результаты экспортированы в {filename}"))
                             self.root.after(0, lambda: self.status_var.set("Готов"))
                             self.root.after(0, lambda: messagebox.showinfo("Экспорт", f"Результаты сохранены в файл:\n{filename}"))
                         else:
@@ -1376,12 +1384,12 @@ class MaterialMatcherGUI:
                         if self.app is None:
                             self.app = MaterialMatcherApp(self.config)
                         self.app.export_results(self.results, filename, format_type)
-                        self.root.after(0, lambda: self.log_message(f"✅ Результаты экспортированы в {filename}"))
+                        self.root.after(0, lambda: self.log_message(f"[OK] Результаты экспортированы в {filename}"))
                         self.root.after(0, lambda: self.status_var.set("Готов"))
                         self.root.after(0, lambda: messagebox.showinfo("Экспорт", f"Результаты сохранены в файл:\n{filename}"))
                         
                 except Exception as e:
-                    self.root.after(0, lambda: self.log_message(f"❌ Ошибка экспорта: {e}"))
+                    self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка экспорта: {e}"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
                     self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Ошибка экспорта: {e}"))
             
@@ -1408,7 +1416,7 @@ class MaterialMatcherGUI:
                 self.root.after(0, lambda: self.status_var.set("Готов"))
                 
             except Exception as e:
-                self.root.after(0, lambda: self.log_message(f"❌ Ошибка поиска: {e}"))
+                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка поиска: {e}"))
                 self.root.after(0, lambda: self.status_var.set("Ошибка"))
         
         threading.Thread(target=search, daemon=True).start()
@@ -1420,7 +1428,7 @@ class MaterialMatcherGUI:
             self.search_tree.delete(item)
         
         if matches:
-            self.log_message(f"🔍 Найдено {len(matches)} соответствий для '{query}'")
+            self.log_message(f"[SEARCH] Найдено {len(matches)} соответствий для '{query}'")
             
             for i, match in enumerate(matches, 1):
                 price_str = f"{match['price_item']['price']} {match['price_item']['currency']}" if match['price_item']['price'] else "Не указана"
@@ -1433,10 +1441,121 @@ class MaterialMatcherGUI:
                     match['price_item']['category'] or ""
                 ))
         else:
-            self.log_message(f"❌ Соответствий для '{query}' не найдено")
+            self.log_message(f"[ERROR] Соответствий для '{query}' не найдено")
             self.search_tree.insert("", tk.END, text="", values=(
                 "Соответствия не найдены", "", "", "", ""
             ))
+
+
+    def copy_debug_logs(self):
+        """Копирование логов отладки в буфер обмена"""
+        try:
+            logs_content = self.debug_logger.get_log_content("main")
+            self.root.clipboard_clear()
+            self.root.clipboard_append(logs_content)
+            messagebox.showinfo("Готово", 
+                              f"Логи отладки скопированы в буфер обмена.\n"
+                              f"Размер: {len(logs_content)} символов")
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при копировании логов: {str(e)}")
+    
+    def show_debug_logs_window(self):
+        """Показать окно с логами отладки"""
+        try:
+            # Создаем новое окно
+            logs_window = tk.Toplevel(self.root)
+            logs_window.title("Логи отладки")
+            logs_window.geometry("800x600")
+            
+            # Создаем вкладки для разных типов логов
+            notebook = ttk.Notebook(logs_window)
+            notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+            
+            # Основные логи
+            main_frame = ttk.Frame(notebook)
+            notebook.add(main_frame, text="Основные логи")
+            
+            main_text = scrolledtext.ScrolledText(main_frame, wrap=tk.WORD, font=('Consolas', 10))
+            main_text.pack(fill=tk.BOTH, expand=True)
+            
+            main_logs = self.debug_logger.get_log_content("main")
+            main_text.insert(tk.END, main_logs)
+            
+            # Детальные логи сопоставления
+            detailed_frame = ttk.Frame(notebook)
+            notebook.add(detailed_frame, text="Детальные логи сопоставления")
+            
+            detailed_text = scrolledtext.ScrolledText(detailed_frame, wrap=tk.WORD, font=('Consolas', 9))
+            detailed_text.pack(fill=tk.BOTH, expand=True)
+            
+            detailed_logs = self.debug_logger.get_log_content("detailed")
+            detailed_text.insert(tk.END, detailed_logs)
+            
+            # Кнопки управления
+            button_frame = ttk.Frame(logs_window)
+            button_frame.pack(fill=tk.X, padx=10, pady=5)
+            
+            ttk.Button(button_frame, text="📋 Копировать основные логи", 
+                      command=lambda: self._copy_text_to_clipboard(main_logs, "основные логи")).pack(side=tk.LEFT, padx=5)
+            
+            ttk.Button(button_frame, text="📋 Копировать детальные логи", 
+                      command=lambda: self._copy_text_to_clipboard(detailed_logs, "детальные логи")).pack(side=tk.LEFT, padx=5)
+            
+            ttk.Button(button_frame, text="🔄 Обновить", 
+                      command=lambda: self._refresh_logs_window(main_text, detailed_text)).pack(side=tk.LEFT, padx=5)
+            
+            ttk.Button(button_frame, text="🗑️ Очистить логи", 
+                      command=lambda: self._clear_debug_logs(main_text, detailed_text)).pack(side=tk.LEFT, padx=5)
+            
+            ttk.Button(button_frame, text="Закрыть", 
+                      command=logs_window.destroy).pack(side=tk.RIGHT, padx=5)
+                      
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при открытии окна логов: {str(e)}")
+    
+    def _copy_text_to_clipboard(self, text, description):
+        """Вспомогательный метод для копирования текста в буфер обмена"""
+        try:
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+            messagebox.showinfo("Готово", 
+                              f"{description.capitalize()} скопированы в буфер обмена.\n"
+                              f"Размер: {len(text)} символов")
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при копировании: {str(e)}")
+    
+    def _refresh_logs_window(self, main_text, detailed_text):
+        """Обновление содержимого окна логов"""
+        try:
+            # Обновляем основные логи
+            main_text.delete(1.0, tk.END)
+            main_logs = self.debug_logger.get_log_content("main")
+            main_text.insert(tk.END, main_logs)
+            
+            # Обновляем детальные логи
+            detailed_text.delete(1.0, tk.END)
+            detailed_logs = self.debug_logger.get_log_content("detailed")
+            detailed_text.insert(tk.END, detailed_logs)
+            
+            messagebox.showinfo("Готово", "Логи обновлены")
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при обновлении логов: {str(e)}")
+    
+    def _clear_debug_logs(self, main_text, detailed_text):
+        """Очистка файлов логов"""
+        if messagebox.askyesno("Подтверждение", 
+                              "Вы уверены, что хотите очистить все лог-файлы?\n"
+                              "Это действие нельзя отменить."):
+            try:
+                self.debug_logger.clear_logs()
+                
+                # Очищаем текстовые поля
+                main_text.delete(1.0, tk.END)
+                detailed_text.delete(1.0, tk.END)
+                
+                messagebox.showinfo("Готово", "Лог-файлы очищены")
+            except Exception as e:
+                messagebox.showerror("Ошибка", f"Ошибка при очистке логов: {str(e)}")
 
 
 def main():

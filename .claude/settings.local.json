@@ -12,7 +12,15 @@
       "Bash(curl:*)",
       "Bash(python:*)",
       "Bash(taskkill:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(.venvScriptsactivate)",
+      "Bash(.venv/Scripts/activate)",
+      "Bash(.venv/Scripts/python.exe -m pip install:*)",
+      "Bash(.venv/Scripts/python.exe test_improvements.py:*)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(dir logs)",
+      "Bash(chcp:*)",
+      "Bash(.venv/Scripts/python.exe test_fixes.py:*)"
     ],
     "deny": [],
     "ask": []
