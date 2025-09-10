@@ -55,6 +55,9 @@ class MaterialMatcherGUI:
         self.create_widgets()
         self.check_elasticsearch_status()
         
+        # Автоматически загружаем файлы при запуске
+        self.root.after(1000, self.auto_load_on_startup)  # Задержка для инициализации GUI
+        
     def load_config(self):
         """Загрузка конфигурации"""
         default_config = {
@@ -176,37 +179,6 @@ class MaterialMatcherGUI:
                                              foreground="red")
         self.pricelist_info_label.pack(side=tk.LEFT, padx=(10,0))
         
-        # Предварительный просмотр (компактный)
-        preview_frame = ttk.LabelFrame(tab, text="Предварительный просмотр", padding=5)
-        preview_frame.pack(fill=tk.X, padx=10, pady=2)
-        
-        # Создаем Treeview для предпросмотра
-        preview_notebook = ttk.Notebook(preview_frame)
-        preview_notebook.pack(fill=tk.BOTH, expand=True)
-        
-        # Вкладка материалы
-        materials_preview_frame = ttk.Frame(preview_notebook)
-        preview_notebook.add(materials_preview_frame, text="Материалы")
-        
-        self.materials_tree = ttk.Treeview(materials_preview_frame, height=4)
-        materials_scrollbar = ttk.Scrollbar(materials_preview_frame, orient=tk.VERTICAL, 
-                                           command=self.materials_tree.yview)
-        self.materials_tree.configure(yscrollcommand=materials_scrollbar.set)
-        
-        self.materials_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        materials_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        # Вкладка прайс-лист
-        pricelist_preview_frame = ttk.Frame(preview_notebook)
-        preview_notebook.add(pricelist_preview_frame, text="Прайс-лист")
-        
-        self.pricelist_tree = ttk.Treeview(pricelist_preview_frame, height=4)
-        pricelist_scrollbar = ttk.Scrollbar(pricelist_preview_frame, orient=tk.VERTICAL, 
-                                           command=self.pricelist_tree.yview)
-        self.pricelist_tree.configure(yscrollcommand=pricelist_scrollbar.set)
-        
-        self.pricelist_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        pricelist_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         # Кнопки действий загрузки
         actions_frame = ttk.Frame(tab)
@@ -219,43 +191,10 @@ class MaterialMatcherGUI:
         
         # === СЕКЦИЯ СОПОСТАВЛЕНИЯ ===
         
-        # Параметры сопоставления
-        params_frame = ttk.LabelFrame(tab, text="Параметры сопоставления", padding=10)
-        params_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        # Порог похожести
-        threshold_row = ttk.Frame(params_frame)
-        threshold_row.pack(fill=tk.X, pady=2)
-        
-        ttk.Label(threshold_row, text="Порог похожести:").pack(side=tk.LEFT)
+        # Скрытые параметры (используем значения по умолчанию из конфига)
         self.threshold_var = tk.DoubleVar(value=self.config['matching']['similarity_threshold'])
-        threshold_scale = ttk.Scale(threshold_row, from_=0, to=100, 
-                                   variable=self.threshold_var, orient=tk.HORIZONTAL)
-        threshold_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10)
-        self.threshold_label = ttk.Label(threshold_row, text=f"{self.threshold_var.get():.1f}%")
-        self.threshold_label.pack(side=tk.LEFT)
-        
-        threshold_scale.configure(command=self.update_threshold_label)
-        
-        # Максимальное количество результатов
-        max_results_row = ttk.Frame(params_frame)
-        max_results_row.pack(fill=tk.X, pady=2)
-        
-        ttk.Label(max_results_row, text="Макс. результатов на материал:").pack(side=tk.LEFT)
         self.max_results_var = tk.IntVar(value=self.config['matching']['max_results_per_material'])
-        max_results_spin = ttk.Spinbox(max_results_row, from_=1, to=50, width=10,
-                                      textvariable=self.max_results_var)
-        max_results_spin.pack(side=tk.LEFT, padx=10)
-        
-        # Количество потоков
-        workers_row = ttk.Frame(params_frame)
-        workers_row.pack(fill=tk.X, pady=2)
-        
-        ttk.Label(workers_row, text="Количество потоков:").pack(side=tk.LEFT)
         self.workers_var = tk.IntVar(value=self.config['matching']['max_workers'])
-        workers_spin = ttk.Spinbox(workers_row, from_=1, to=16, width=10,
-                                  textvariable=self.workers_var)
-        workers_spin.pack(side=tk.LEFT, padx=10)
         
         # Кнопки управления сопоставлением
         control_frame = ttk.Frame(tab)
@@ -276,7 +215,7 @@ class MaterialMatcherGUI:
         self.progress_var = tk.StringVar(value="Готов к запуску")
         ttk.Label(progress_frame, textvariable=self.progress_var).pack(anchor=tk.W)
         
-        self.progress_bar = ttk.Progressbar(progress_frame, mode='indeterminate')
+        self.progress_bar = ttk.Progressbar(progress_frame, mode='determinate')
         self.progress_bar.pack(fill=tk.X, pady=5)
         
         # Лог выполнения
@@ -485,20 +424,34 @@ class MaterialMatcherGUI:
             self.materials_path_var.set(filename)
     
     def load_materials_auto(self):
-        """Выбор и автоматическая загрузка файла материалов"""
-        filename = filedialog.askopenfilename(
-            title="Выберите файл материалов",
-            filetypes=[
-                ("Все поддерживаемые", "*.csv;*.xlsx;*.json"),
-                ("CSV файлы", "*.csv"),
-                ("Excel файлы", "*.xlsx"),
-                ("JSON файлы", "*.json"),
-                ("Все файлы", "*.*")
-            ]
-        )
-        if filename:
-            self.materials_path_var.set(filename)
-            self.load_materials_data()  # Автоматически загружаем после выбора
+        """Автоматическая загрузка всех файлов материалов из папки material"""
+        materials_dir = os.path.join(os.getcwd(), "material")
+        
+        # Проверяем существование папки
+        if not os.path.exists(materials_dir):
+            messagebox.showerror("Ошибка", f"Папка 'material' не найдена!\nОжидается: {materials_dir}")
+            return
+        
+        # Ищем все поддерживаемые файлы
+        supported_extensions = ['.csv', '.xlsx', '.json']
+        material_files = []
+        
+        for file in os.listdir(materials_dir):
+            file_path = os.path.join(materials_dir, file)
+            if os.path.isfile(file_path):
+                _, ext = os.path.splitext(file.lower())
+                if ext in supported_extensions:
+                    material_files.append(file_path)
+        
+        if not material_files:
+            messagebox.showwarning("Предупреждение", 
+                                 f"В папке 'material' не найдено файлов материалов!\n"
+                                 f"Поддерживаемые форматы: {', '.join(supported_extensions)}")
+            return
+        
+        # Устанавливаем путь к первому файлу (для совместимости)
+        self.materials_path_var.set(material_files[0])
+        self.load_materials_from_directory(materials_dir)  # Загружаем из всей папки
     
     def load_pricelist_file(self):
         """Выбор файла прайс-листа"""
@@ -516,20 +469,169 @@ class MaterialMatcherGUI:
             self.pricelist_path_var.set(filename)
     
     def load_pricelist_auto(self):
-        """Выбор и автоматическая загрузка файла прайс-листа"""
-        filename = filedialog.askopenfilename(
-            title="Выберите файл прайс-листа",
-            filetypes=[
-                ("Все поддерживаемые", "*.csv;*.xlsx;*.json"),
-                ("CSV файлы", "*.csv"),
-                ("Excel файлы", "*.xlsx"),
-                ("JSON файлы", "*.json"),
-                ("Все файлы", "*.*")
-            ]
-        )
-        if filename:
-            self.pricelist_path_var.set(filename)
-            self.load_pricelist_data()  # Автоматически загружаем после выбора
+        """Автоматическая загрузка всех файлов прайс-листов из папки price-list"""
+        pricelist_dir = os.path.join(os.getcwd(), "price-list")
+        
+        # Проверяем существование папки
+        if not os.path.exists(pricelist_dir):
+            messagebox.showerror("Ошибка", f"Папка 'price-list' не найдена!\nОжидается: {pricelist_dir}")
+            return
+        
+        # Ищем все поддерживаемые файлы
+        supported_extensions = ['.csv', '.xlsx', '.json']
+        pricelist_files = []
+        
+        for file in os.listdir(pricelist_dir):
+            file_path = os.path.join(pricelist_dir, file)
+            if os.path.isfile(file_path):
+                _, ext = os.path.splitext(file.lower())
+                if ext in supported_extensions:
+                    pricelist_files.append(file_path)
+        
+        if not pricelist_files:
+            messagebox.showwarning("Предупреждение", 
+                                 f"В папке 'price-list' не найдено файлов прайс-листов!\n"
+                                 f"Поддерживаемые форматы: {', '.join(supported_extensions)}")
+            return
+        
+        # Устанавливаем путь к первому файлу (для совместимости)
+        self.pricelist_path_var.set(pricelist_files[0])
+        self.load_pricelist_from_directory(pricelist_dir)  # Загружаем из всей папки
+    
+    def load_materials_from_directory(self, directory_path):
+        """Загрузка всех файлов материалов из указанной папки"""
+        try:
+            self.status_var.set("Загружаем материалы из папки...")
+            
+            # Создаем и запускаем поток для загрузки
+            def load_materials_thread():
+                all_materials = []
+                supported_extensions = ['.csv', '.xlsx', '.json']
+                
+                # Получаем все файлы
+                material_files = []
+                for file in os.listdir(directory_path):
+                    file_path = os.path.join(directory_path, file)
+                    if os.path.isfile(file_path):
+                        _, ext = os.path.splitext(file.lower())
+                        if ext in supported_extensions:
+                            material_files.append((file, file_path))
+                
+                if not material_files:
+                    messagebox.showwarning("Предупреждение", "Не найдено файлов для загрузки!")
+                    return
+                
+                # Настраиваем прогресс
+                self.progress_var.set(0)
+                self.progress_bar['maximum'] = len(material_files)
+                
+                # Загружаем каждый файл
+                for i, (filename, file_path) in enumerate(material_files):
+                    self.root.after(0, lambda f=filename: self.status_var.set(f"Загружаем: {f}"))
+                    try:
+                        if file_path.endswith('.csv'):
+                            from src.utils.data_loader import MaterialLoader
+                            materials = MaterialLoader.load_from_csv(file_path)
+                        elif file_path.endswith('.xlsx'):
+                            from src.utils.data_loader import MaterialLoader
+                            materials = MaterialLoader.load_from_excel(file_path)
+                        elif file_path.endswith('.json'):
+                            from src.utils.data_loader import MaterialLoader
+                            materials = MaterialLoader.load_from_json(file_path)
+                        else:
+                            continue
+                        
+                        all_materials.extend(materials)
+                        self.progress_var.set(i + 1)
+                        self.root.update_idletasks()
+                        
+                    except Exception as e:
+                        print(f"Ошибка загрузки файла {filename}: {e}")
+                        continue
+                
+                # Сохраняем результаты
+                self.materials = all_materials
+                self.materials_order = [m.id for m in all_materials]
+                
+                # Обновляем интерфейс
+                self.root.after(0, lambda: self.update_materials_info(len(all_materials)))
+                self.root.after(0, lambda: self.status_var.set(f"Загружено материалов: {len(all_materials)} из {len(material_files)} файлов"))
+            
+            # Запускаем в потоке
+            thread = threading.Thread(target=load_materials_thread)
+            thread.daemon = True
+            thread.start()
+            
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при загрузке материалов:\n{str(e)}")
+            self.status_var.set("Готов")
+    
+    def load_pricelist_from_directory(self, directory_path):
+        """Загрузка всех файлов прайс-листов из указанной папки"""
+        try:
+            self.status_var.set("Загружаем прайс-листы из папки...")
+            
+            # Создаем и запускаем поток для загрузки
+            def load_pricelist_thread():
+                all_price_items = []
+                supported_extensions = ['.csv', '.xlsx', '.json']
+                
+                # Получаем все файлы
+                pricelist_files = []
+                for file in os.listdir(directory_path):
+                    file_path = os.path.join(directory_path, file)
+                    if os.path.isfile(file_path):
+                        _, ext = os.path.splitext(file.lower())
+                        if ext in supported_extensions:
+                            pricelist_files.append((file, file_path))
+                
+                if not pricelist_files:
+                    messagebox.showwarning("Предупреждение", "Не найдено файлов для загрузки!")
+                    return
+                
+                # Настраиваем прогресс
+                self.progress_var.set(0)
+                self.progress_bar['maximum'] = len(pricelist_files)
+                
+                # Загружаем каждый файл
+                for i, (filename, file_path) in enumerate(pricelist_files):
+                    self.root.after(0, lambda f=filename: self.status_var.set(f"Загружаем: {f}"))
+                    try:
+                        if file_path.endswith('.csv'):
+                            from src.utils.data_loader import PriceListLoader
+                            price_items = PriceListLoader.load_from_csv(file_path)
+                        elif file_path.endswith('.xlsx'):
+                            from src.utils.data_loader import PriceListLoader
+                            price_items = PriceListLoader.load_from_excel(file_path)
+                        elif file_path.endswith('.json'):
+                            from src.utils.data_loader import PriceListLoader
+                            price_items = PriceListLoader.load_from_json(file_path)
+                        else:
+                            continue
+                        
+                        all_price_items.extend(price_items)
+                        self.progress_var.set(i + 1)
+                        self.root.update_idletasks()
+                        
+                    except Exception as e:
+                        print(f"Ошибка загрузки файла {filename}: {e}")
+                        continue
+                
+                # Сохраняем результаты
+                self.price_items = all_price_items
+                
+                # Обновляем интерфейс
+                self.root.after(0, lambda: self.update_pricelist_info(len(all_price_items)))
+                self.root.after(0, lambda: self.status_var.set(f"Загружено позиций прайс-листа: {len(all_price_items)} из {len(pricelist_files)} файлов"))
+            
+            # Запускаем в потоке
+            thread = threading.Thread(target=load_pricelist_thread)
+            thread.daemon = True
+            thread.start()
+            
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при загрузке прайс-листов:\n{str(e)}")
+            self.status_var.set("Готов")
     
     def load_materials_data(self):
         """Загрузка данных материалов"""
@@ -686,97 +788,7 @@ class MaterialMatcherGUI:
         """Обновление информации о прайс-листе"""
         self.pricelist_info_label.config(text=f"Загружено {count} позиций", foreground="green")
     
-    def update_materials_preview(self, materials):
-        """Быстрое обновление предварительного просмотра материалов"""
-        # Очищаем дерево
-        for item in self.materials_tree.get_children():
-            self.materials_tree.delete(item)
-        
-        # Настраиваем колонки только если еще не настроены
-        if not self.materials_tree["columns"]:
-            columns = ("name", "category", "brand", "description")
-            self.materials_tree["columns"] = columns
-            self.materials_tree["show"] = "headings"
-            
-            # Заголовки
-            self.materials_tree.heading("name", text="Название")
-            self.materials_tree.heading("category", text="Категория") 
-            self.materials_tree.heading("brand", text="Бренд")
-            self.materials_tree.heading("description", text="Описание")
-            
-            # Ширина колонок
-            self.materials_tree.column("name", width=200, minwidth=150)
-            self.materials_tree.column("category", width=120, minwidth=80)
-            self.materials_tree.column("brand", width=120, minwidth=80)
-            self.materials_tree.column("description", width=300, minwidth=200)
-        
-        # Отключаем обновление виджета для ускорения
-        self.materials_tree.update_idletasks()
-        
-        # Добавляем только первые 20 материалов для быстрого предпросмотра
-        for material in materials[:20]:
-            desc = (material.description[:50] + "...") if len(material.description) > 50 else material.description
-            self.materials_tree.insert("", tk.END, values=(
-                material.name[:30],  # Ограничиваем длину названия
-                (material.category or "")[:15],
-                (material.brand or "")[:15], 
-                desc
-            ))
-        
-        # Показываем сообщение если материалов больше 20
-        if len(materials) > 20:
-            self.materials_tree.insert("", tk.END, values=(
-                f"... и еще {len(materials) - 20} материалов",
-                "", "", ""
-            ))
     
-    def update_pricelist_preview(self, price_items):
-        """Быстрое обновление предварительного просмотра прайс-листа"""
-        # Очищаем дерево
-        for item in self.pricelist_tree.get_children():
-            self.pricelist_tree.delete(item)
-        
-        # Настраиваем колонки только если еще не настроены
-        if not self.pricelist_tree["columns"]:
-            columns = ("name", "price", "supplier", "category", "description")
-            self.pricelist_tree["columns"] = columns
-            self.pricelist_tree["show"] = "headings"
-            
-            # Заголовки
-            self.pricelist_tree.heading("name", text="Материал")
-            self.pricelist_tree.heading("price", text="Цена")
-            self.pricelist_tree.heading("supplier", text="Поставщик")
-            self.pricelist_tree.heading("category", text="Категория")
-            self.pricelist_tree.heading("description", text="Описание")
-            
-            # Ширина колонок
-            self.pricelist_tree.column("name", width=200, minwidth=150)
-            self.pricelist_tree.column("price", width=100, minwidth=80)
-            self.pricelist_tree.column("supplier", width=150, minwidth=100)
-            self.pricelist_tree.column("category", width=120, minwidth=80)
-            self.pricelist_tree.column("description", width=250, minwidth=200)
-        
-        # Отключаем обновление виджета для ускорения
-        self.pricelist_tree.update_idletasks()
-        
-        # Добавляем только первые 20 позиций для быстрого предпросмотра
-        for item in price_items[:20]:
-            desc = (item.description[:50] + "...") if len(item.description) > 50 else item.description
-            price_str = f"{item.price} {item.currency}" if item.price else "Не указана"
-            self.pricelist_tree.insert("", tk.END, values=(
-                item.material_name[:30],  # Ограничиваем длину названия
-                price_str,
-                (item.supplier or "")[:15],
-                (item.category or "")[:15],
-                desc
-            ))
-        
-        # Показываем сообщение если позиций больше 20
-        if len(price_items) > 20:
-            self.pricelist_tree.insert("", tk.END, values=(
-                f"... и еще {len(price_items) - 20} позиций",
-                "", "", "", ""
-            ))
     
     def update_start_button_state(self):
         """Обновление состояния кнопки запуска"""
@@ -800,11 +812,12 @@ class MaterialMatcherGUI:
         else:
             self.start_button.config(state="disabled")
     
-    def index_data(self):
+    def index_data(self, show_warning=True):
         """Индексация данных"""
         if not self.materials and not self.price_items:
-            messagebox.showwarning("Предупреждение", "Нет данных для индексации")
-            return
+            if show_warning:
+                messagebox.showwarning("Предупреждение", "Нет данных для индексации")
+            return False
         
         def index():
             try:
@@ -826,6 +839,7 @@ class MaterialMatcherGUI:
                 self.root.after(0, lambda: self.status_var.set("Ошибка"))
         
         threading.Thread(target=index, daemon=True).start()
+        return True
     
     def clear_data(self):
         """Очистка данных"""
@@ -842,10 +856,7 @@ class MaterialMatcherGUI:
         self.pricelist_info_label.config(text="Прайс-лист не загружен", foreground="red")
         
         # Очищаем предпросмотр
-        for item in self.materials_tree.get_children():
-            self.materials_tree.delete(item)
-        for item in self.pricelist_tree.get_children():
-            self.pricelist_tree.delete(item)
+        # Предварительный просмотр удален из интерфейса
         
         # Очищаем результаты
         for item in self.results_tree.get_children():
@@ -1556,6 +1567,57 @@ class MaterialMatcherGUI:
                 messagebox.showinfo("Готово", "Лог-файлы очищены")
             except Exception as e:
                 messagebox.showerror("Ошибка", f"Ошибка при очистке логов: {str(e)}")
+
+    def auto_load_on_startup(self):
+        """Автоматическая загрузка файлов при запуске программы"""
+        self.log_message("[INFO] Запуск автоматической загрузки файлов...")
+        
+        materials_dir = Path("./material")
+        pricelist_dir = Path("./price-list")
+        
+        # Проверяем наличие папок
+        materials_exists = materials_dir.exists() and any(materials_dir.iterdir())
+        pricelist_exists = pricelist_dir.exists() and any(pricelist_dir.iterdir())
+        
+        if not materials_exists and not pricelist_exists:
+            self.log_message("[INFO] Папки material и price-list пусты или не найдены. Автозагрузка пропущена.")
+            return
+        
+        def auto_load_thread():
+            try:
+                # Загружаем материалы если есть файлы
+                if materials_exists:
+                    self.root.after(0, lambda: self.status_var.set("Автозагрузка материалов..."))
+                    self.load_materials_from_directory(materials_dir)
+                    self.root.after(0, lambda: self.log_message("[OK] Материалы автоматически загружены"))
+                
+                # Небольшая пауза между загрузками
+                import time
+                time.sleep(0.5)
+                
+                # Загружаем прайс-листы если есть файлы
+                if pricelist_exists:
+                    self.root.after(0, lambda: self.status_var.set("Автозагрузка прайс-листов..."))
+                    self.load_pricelist_from_directory(pricelist_dir)
+                    self.root.after(0, lambda: self.log_message("[OK] Прайс-листы автоматически загружены"))
+                
+                # Пауза перед автоматической индексацией
+                time.sleep(1.0)
+                
+                # Автоматическая индексация если есть данные
+                if self.materials or self.price_items:
+                    self.root.after(0, lambda: self.log_message("[INFO] Запуск автоматической индексации..."))
+                    self.root.after(0, lambda: self.index_data(show_warning=False))
+                    self.root.after(0, lambda: self.log_message("[OK] Система готова к работе!"))
+                else:
+                    self.root.after(0, lambda: self.status_var.set("Готов"))
+                    
+            except Exception as e:
+                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка автозагрузки: {e}"))
+                self.root.after(0, lambda: self.status_var.set("Ошибка"))
+        
+        # Запускаем автозагрузку в отдельном потоке
+        threading.Thread(target=auto_load_thread, daemon=True).start()
 
 
 def main():
