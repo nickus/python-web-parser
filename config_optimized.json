@@ -1,0 +1,31 @@
+{
+    "elasticsearch": {
+        "host": "localhost",
+        "port": 9200,
+        "username": null,
+        "password": null,
+        "bulk_size": 1000,
+        "max_workers": 6
+    },
+    "matching": {
+        "similarity_threshold": 20.0,
+        "max_results_per_material": 10,
+        "max_workers": 6
+    },
+    "performance": {
+        "log_detailed_stats": true,
+        "optimize_after_indexing": true,
+        "health_check_before_indexing": true,
+        "enable_query_caching": true,
+        "cache_ttl_seconds": 300,
+        "enable_search_monitoring": true,
+        "warmup_on_startup": true
+    },
+    "advanced_optimizations": {
+        "use_russian_analyzer": true,
+        "async_translog": true,
+        "optimized_refresh_interval": true,
+        "memory_optimized_mappings": true,
+        "production_ready_settings": true
+    }
+}

@@ -1,0 +1,1237 @@
+[
+  {
+    "material": {
+      "id": "3",
+      "name": "Светодиодная лампа 10Вт",
+      "description": "Светодиодная лампа E27 теплый свет",
+      "category": "Светотехника",
+      "brand": "Philips",
+      "model": "CorePro LEDBulb 10W",
+      "specifications": {
+        "power": "10Вт",
+        "base": "E27",
+        "temperature": "3000К"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831552",
+      "full_text": "Светодиодная лампа 10Вт Светодиодная лампа E27 теплый свет Philips CorePro LEDBulb 10W Светотехника"
+    },
+    "price_item": {
+      "id": "3",
+      "material_name": "LED лампа CorePro 10W E27",
+      "description": "Светодиодная лампа для дома",
+      "price": 299.99,
+      "currency": "RUB",
+      "supplier": "Свет и Комфорт",
+      "category": "Освещение",
+      "brand": "Philips",
+      "unit": "шт",
+      "specifications": {
+        "power": "10Вт",
+        "base": "E27"
+      },
+      "updated_at": "2025-09-12T00:00:21.837265",
+      "full_text": "LED лампа CorePro 10W E27 Светодиодная лампа для дома Philips Освещение Свет и Комфорт"
+    },
+    "similarity_percentage": 64.46,
+    "similarity_details": {
+      "name": 50.16,
+      "description": 62.82,
+      "category": 45.51,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 10.2264
+  },
+  {
+    "material": {
+      "id": "3",
+      "name": "Светодиодная лампа 10Вт",
+      "description": "Светодиодная лампа E27 теплый свет",
+      "category": "Светотехника",
+      "brand": "Philips",
+      "model": "CorePro LEDBulb 10W",
+      "specifications": {
+        "power": "10Вт",
+        "base": "E27",
+        "temperature": "3000К"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831552",
+      "full_text": "Светодиодная лампа 10Вт Светодиодная лампа E27 теплый свет Philips CorePro LEDBulb 10W Светотехника"
+    },
+    "price_item": {
+      "id": "13",
+      "material_name": "Лампа светодиодная Osram 12W",
+      "description": "LED лампа холодный свет",
+      "price": 420.0,
+      "currency": "RUB",
+      "supplier": "Освещение Плюс",
+      "category": "Освещение",
+      "brand": "Osram",
+      "unit": "шт",
+      "specifications": {
+        "power": "12Вт",
+        "temperature": "6500К"
+      },
+      "updated_at": "2025-09-12T00:00:21.837385",
+      "full_text": "Лампа светодиодная Osram 12W LED лампа холодный свет Osram Освещение Освещение Плюс"
+    },
+    "similarity_percentage": 33.89,
+    "similarity_details": {
+      "name": 76.36,
+      "description": 55.83,
+      "category": 45.51,
+      "brand": 17.0,
+      "specifications": 54.0
+    },
+    "elasticsearch_score": 13.1597
+  },
+  {
+    "material": {
+      "id": "2",
+      "name": "Автоматический выключатель C16",
+      "description": "Однополюсный автоматический выключатель 16А",
+      "category": "Защитная автоматика",
+      "brand": "ABB",
+      "model": "S201-C16",
+      "specifications": {
+        "current": "16А",
+        "poles": 1,
+        "type": "C"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831536",
+      "full_text": "Автоматический выключатель C16 Однополюсный автоматический выключатель 16А ABB S201-C16 Защитная автоматика"
+    },
+    "price_item": {
+      "id": "2",
+      "material_name": "Автомат защиты S201-C16 ABB",
+      "description": "Автоматический выключатель однополюсный",
+      "price": 890.0,
+      "currency": "RUB",
+      "supplier": "АББ-Поставка",
+      "category": "Автоматика",
+      "brand": "ABB",
+      "unit": "шт",
+      "specifications": {
+        "current": "16А",
+        "poles": 1
+      },
+      "updated_at": "2025-09-12T00:00:21.837247",
+      "full_text": "Автомат защиты S201-C16 ABB Автоматический выключатель однополюсный ABB Автоматика АББ-Поставка"
+    },
+    "similarity_percentage": 65.45,
+    "similarity_details": {
+      "name": 30.06,
+      "description": 82.12,
+      "category": 80.0,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 16.5949
+  },
+  {
+    "material": {
+      "id": "2",
+      "name": "Автоматический выключатель C16",
+      "description": "Однополюсный автоматический выключатель 16А",
+      "category": "Защитная автоматика",
+      "brand": "ABB",
+      "model": "S201-C16",
+      "specifications": {
+        "current": "16А",
+        "poles": 1,
+        "type": "C"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831536",
+      "full_text": "Автоматический выключатель C16 Однополюсный автоматический выключатель 16А ABB S201-C16 Защитная автоматика"
+    },
+    "price_item": {
+      "id": "12",
+      "material_name": "Автомат Schneider Electric C20",
+      "description": "Автоматический выключатель 20А",
+      "price": 750.5,
+      "currency": "RUB",
+      "supplier": "Schneider Group",
+      "category": "Автоматика",
+      "brand": "Schneider Electric",
+      "unit": "шт",
+      "specifications": {
+        "current": "20А",
+        "type": "C"
+      },
+      "updated_at": "2025-09-12T00:00:21.837374",
+      "full_text": "Автомат Schneider Electric C20 Автоматический выключатель 20А Schneider Electric Автоматика Schneider Group"
+    },
+    "similarity_percentage": 41.17,
+    "similarity_details": {
+      "name": 20.83,
+      "description": 72.58,
+      "category": 80.0,
+      "brand": 0.0,
+      "specifications": 63.22
+    },
+    "elasticsearch_score": 8.4005
+  },
+  {
+    "material": {
+      "id": "2",
+      "name": "Автоматический выключатель C16",
+      "description": "Однополюсный автоматический выключатель 16А",
+      "category": "Защитная автоматика",
+      "brand": "ABB",
+      "model": "S201-C16",
+      "specifications": {
+        "current": "16А",
+        "poles": 1,
+        "type": "C"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831536",
+      "full_text": "Автоматический выключатель C16 Однополюсный автоматический выключатель 16А ABB S201-C16 Защитная автоматика"
+    },
+    "price_item": {
+      "id": "7",
+      "material_name": "Выключатель Valena Life 1-клавишный",
+      "description": "Выключатель освещения белый",
+      "price": 189.0,
+      "currency": "RUB",
+      "supplier": "Legrand Russia",
+      "category": "Электроустановочные",
+      "brand": "Legrand",
+      "unit": "шт",
+      "specifications": {
+        "keys": 1,
+        "color": "белый"
+      },
+      "updated_at": "2025-09-12T00:00:21.837318",
+      "full_text": "Выключатель Valena Life 1-клавишный Выключатель освещения белый Legrand Электроустановочные Legrand Russia"
+    },
+    "similarity_percentage": 29.12,
+    "similarity_details": {
+      "name": 40.69,
+      "description": 35.01,
+      "category": 18.91,
+      "brand": 20.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 6.7262
+  },
+  {
+    "material": {
+      "id": "4",
+      "name": "Розетка с заземлением",
+      "description": "Розетка электрическая с заземляющим контактом",
+      "category": "Установочные изделия",
+      "brand": "Schneider Electric",
+      "model": "Unica New",
+      "specifications": {
+        "type": "с заземлением",
+        "color": "белый"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831564",
+      "full_text": "Розетка с заземлением Розетка электрическая с заземляющим контактом Schneider Electric Unica New Установочные изделия"
+    },
+    "price_item": {
+      "id": "4",
+      "material_name": "Розетка Unica New с заземлением",
+      "description": "Электрическая розетка скрытой установки",
+      "price": 245.0,
+      "currency": "RUB",
+      "supplier": "Schneider Group",
+      "category": "Электроустановочные",
+      "brand": "Schneider Electric",
+      "unit": "шт",
+      "specifications": {
+        "type": "с заземлением"
+      },
+      "updated_at": "2025-09-12T00:00:21.837277",
+      "full_text": "Розетка Unica New с заземлением Электрическая розетка скрытой установки Schneider Electric Электроустановочные Schneider Group"
+    },
+    "similarity_percentage": 74.48,
+    "similarity_details": {
+      "name": 77.58,
+      "description": 53.5,
+      "category": 51.65,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 18.7269
+  },
+  {
+    "material": {
+      "id": "4",
+      "name": "Розетка с заземлением",
+      "description": "Розетка электрическая с заземляющим контактом",
+      "category": "Установочные изделия",
+      "brand": "Schneider Electric",
+      "model": "Unica New",
+      "specifications": {
+        "type": "с заземлением",
+        "color": "белый"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831564",
+      "full_text": "Розетка с заземлением Розетка электрическая с заземляющим контактом Schneider Electric Unica New Установочные изделия"
+    },
+    "price_item": {
+      "id": "14",
+      "material_name": "Розетка двойная Legrand",
+      "description": "Двухместная розетка с заземлением",
+      "price": 385.0,
+      "currency": "RUB",
+      "supplier": "Legrand Russia",
+      "category": "Электроустановочные",
+      "brand": "Legrand",
+      "unit": "шт",
+      "specifications": {
+        "sockets": 2,
+        "grounding": true
+      },
+      "updated_at": "2025-09-12T00:00:21.837396",
+      "full_text": "Розетка двойная Legrand Двухместная розетка с заземлением Legrand Электроустановочные Legrand Russia"
+    },
+    "similarity_percentage": 36.8,
+    "similarity_details": {
+      "name": 42.35,
+      "description": 42.55,
+      "category": 51.65,
+      "brand": 24.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 12.322
+  },
+  {
+    "material": {
+      "id": "4",
+      "name": "Розетка с заземлением",
+      "description": "Розетка электрическая с заземляющим контактом",
+      "category": "Установочные изделия",
+      "brand": "Schneider Electric",
+      "model": "Unica New",
+      "specifications": {
+        "type": "с заземлением",
+        "color": "белый"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831564",
+      "full_text": "Розетка с заземлением Розетка электрическая с заземляющим контактом Schneider Electric Unica New Установочные изделия"
+    },
+    "price_item": {
+      "id": "12",
+      "material_name": "Автомат Schneider Electric C20",
+      "description": "Автоматический выключатель 20А",
+      "price": 750.5,
+      "currency": "RUB",
+      "supplier": "Schneider Group",
+      "category": "Автоматика",
+      "brand": "Schneider Electric",
+      "unit": "шт",
+      "specifications": {
+        "current": "20А",
+        "type": "C"
+      },
+      "updated_at": "2025-09-12T00:00:21.837374",
+      "full_text": "Автомат Schneider Electric C20 Автоматический выключатель 20А Schneider Electric Автоматика Schneider Group"
+    },
+    "similarity_percentage": 35.5,
+    "similarity_details": {
+      "name": 19.35,
+      "description": 31.5,
+      "category": 18.4,
+      "brand": 100.0,
+      "specifications": 37.03
+    },
+    "elasticsearch_score": 14.7513
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГНГ-LS 3x2.5",
+      "description": "Силовой кабель с пониженным дымо- и газовыделением",
+      "category": "Кабели и провода",
+      "brand": "Рыбинсккабель",
+      "model": "ВВГНГ-LS 3x2.5",
+      "specifications": {
+        "voltage": "0.66кВ",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831509",
+      "full_text": "Кабель ВВГНГ-LS 3x2.5 Силовой кабель с пониженным дымо- и газовыделением Рыбинсккабель ВВГНГ-LS 3x2.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "1",
+      "material_name": "Кабель ВВГНГ-LS 3х2.5мм2",
+      "description": "Силовой кабель с низким дымо- и газовыделением",
+      "price": 145.5,
+      "currency": "RUB",
+      "supplier": "ЭлектроТорг ООО",
+      "category": "Кабели",
+      "brand": "Рыбинсккабель",
+      "unit": "м",
+      "specifications": {
+        "voltage": "660В",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "updated_at": "2025-09-12T00:00:21.837224",
+      "full_text": "Кабель ВВГНГ-LS 3х2.5мм2 Силовой кабель с низким дымо- и газовыделением Рыбинсккабель Кабели ЭлектроТорг ООО"
+    },
+    "similarity_percentage": 85.85,
+    "similarity_details": {
+      "name": 82.0,
+      "description": 88.66,
+      "category": 80.0,
+      "brand": 100.0,
+      "specifications": 83.17
+    },
+    "elasticsearch_score": 24.027
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГНГ-LS 3x2.5",
+      "description": "Силовой кабель с пониженным дымо- и газовыделением",
+      "category": "Кабели и провода",
+      "brand": "Рыбинсккабель",
+      "model": "ВВГНГ-LS 3x2.5",
+      "specifications": {
+        "voltage": "0.66кВ",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831509",
+      "full_text": "Кабель ВВГНГ-LS 3x2.5 Силовой кабель с пониженным дымо- и газовыделением Рыбинсккабель ВВГНГ-LS 3x2.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "11",
+      "material_name": "Кабель NYM 3x2.5",
+      "description": "Установочный кабель немецкого стандарта",
+      "price": 165.8,
+      "currency": "RUB",
+      "supplier": "Европровод",
+      "category": "Кабели",
+      "brand": "Prysmian",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "2.5мм2",
+        "standard": "NYM"
+      },
+      "updated_at": "2025-09-12T00:00:21.837363",
+      "full_text": "Кабель NYM 3x2.5 Установочный кабель немецкого стандарта Prysmian Кабели Европровод"
+    },
+    "similarity_percentage": 59.18,
+    "similarity_details": {
+      "name": 67.23,
+      "description": 37.2,
+      "category": 80.0,
+      "brand": 19.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 17.774
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГНГ-LS 3x2.5",
+      "description": "Силовой кабель с пониженным дымо- и газовыделением",
+      "category": "Кабели и провода",
+      "brand": "Рыбинсккабель",
+      "model": "ВВГНГ-LS 3x2.5",
+      "specifications": {
+        "voltage": "0.66кВ",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831509",
+      "full_text": "Кабель ВВГНГ-LS 3x2.5 Силовой кабель с пониженным дымо- и газовыделением Рыбинсккабель ВВГНГ-LS 3x2.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "6",
+      "material_name": "Кабель UTP Cat5e 4 пары",
+      "description": "Витая пара для сетей Ethernet",
+      "price": 28.5,
+      "currency": "RUB",
+      "supplier": "КабельСвязь",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "unit": "м",
+      "specifications": {
+        "category": "Cat.5e",
+        "pairs": 4
+      },
+      "updated_at": "2025-09-12T00:00:21.837302",
+      "full_text": "Кабель UTP Cat5e 4 пары Витая пара для сетей Ethernet Hyperline Кабели связи КабельСвязь"
+    },
+    "similarity_percentage": 29.48,
+    "similarity_details": {
+      "name": 35.65,
+      "description": 21.12,
+      "category": 55.28,
+      "brand": 18.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 8.9468
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГНГ-LS 3x2.5",
+      "description": "Силовой кабель с пониженным дымо- и газовыделением",
+      "category": "Кабели и провода",
+      "brand": "Рыбинсккабель",
+      "model": "ВВГНГ-LS 3x2.5",
+      "specifications": {
+        "voltage": "0.66кВ",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831509",
+      "full_text": "Кабель ВВГНГ-LS 3x2.5 Силовой кабель с пониженным дымо- и газовыделением Рыбинсккабель ВВГНГ-LS 3x2.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "10",
+      "material_name": "ПВС 3x1.5 гибкий провод",
+      "description": "Соединительный провод для бытовых приборов",
+      "price": 45.2,
+      "currency": "RUB",
+      "supplier": "Электрокабель",
+      "category": "Провода",
+      "brand": "Электрокабель",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "1.5мм2"
+      },
+      "updated_at": "2025-09-12T00:00:21.837352",
+      "full_text": "ПВС 3x1.5 гибкий провод Соединительный провод для бытовых приборов Электрокабель Провода Электрокабель"
+    },
+    "similarity_percentage": 26.53,
+    "similarity_details": {
+      "name": 25.43,
+      "description": 28.43,
+      "category": 80.0,
+      "brand": 54.0,
+      "specifications": 82.62
+    },
+    "elasticsearch_score": 12.0469
+  },
+  {
+    "material": {
+      "id": "6",
+      "name": "Кабель UTP Cat.5e",
+      "description": "Кабель витая пара для компьютерных сетей",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "model": "UTP4-C5E-SOLID-GY",
+      "specifications": {
+        "category": "Cat.5e",
+        "type": "UTP",
+        "cores": 4
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831589",
+      "full_text": "Кабель UTP Cat.5e Кабель витая пара для компьютерных сетей Hyperline UTP4-C5E-SOLID-GY Кабели связи"
+    },
+    "price_item": {
+      "id": "6",
+      "material_name": "Кабель UTP Cat5e 4 пары",
+      "description": "Витая пара для сетей Ethernet",
+      "price": 28.5,
+      "currency": "RUB",
+      "supplier": "КабельСвязь",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "unit": "м",
+      "specifications": {
+        "category": "Cat.5e",
+        "pairs": 4
+      },
+      "updated_at": "2025-09-12T00:00:21.837302",
+      "full_text": "Кабель UTP Cat5e 4 пары Витая пара для сетей Ethernet Hyperline Кабели связи КабельСвязь"
+    },
+    "similarity_percentage": 80.71,
+    "similarity_details": {
+      "name": 70.07,
+      "description": 63.4,
+      "category": 100.0,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 20.3479
+  },
+  {
+    "material": {
+      "id": "6",
+      "name": "Кабель UTP Cat.5e",
+      "description": "Кабель витая пара для компьютерных сетей",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "model": "UTP4-C5E-SOLID-GY",
+      "specifications": {
+        "category": "Cat.5e",
+        "type": "UTP",
+        "cores": 4
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831589",
+      "full_text": "Кабель UTP Cat.5e Кабель витая пара для компьютерных сетей Hyperline UTP4-C5E-SOLID-GY Кабели связи"
+    },
+    "price_item": {
+      "id": "11",
+      "material_name": "Кабель NYM 3x2.5",
+      "description": "Установочный кабель немецкого стандарта",
+      "price": 165.8,
+      "currency": "RUB",
+      "supplier": "Европровод",
+      "category": "Кабели",
+      "brand": "Prysmian",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "2.5мм2",
+        "standard": "NYM"
+      },
+      "updated_at": "2025-09-12T00:00:21.837363",
+      "full_text": "Кабель NYM 3x2.5 Установочный кабель немецкого стандарта Prysmian Кабели Европровод"
+    },
+    "similarity_percentage": 53.34,
+    "similarity_details": {
+      "name": 50.46,
+      "description": 33.04,
+      "category": 80.0,
+      "brand": 47.0,
+      "specifications": 75.0
+    },
+    "elasticsearch_score": 9.6457
+  },
+  {
+    "material": {
+      "id": "6",
+      "name": "Кабель UTP Cat.5e",
+      "description": "Кабель витая пара для компьютерных сетей",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "model": "UTP4-C5E-SOLID-GY",
+      "specifications": {
+        "category": "Cat.5e",
+        "type": "UTP",
+        "cores": 4
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831589",
+      "full_text": "Кабель UTP Cat.5e Кабель витая пара для компьютерных сетей Hyperline UTP4-C5E-SOLID-GY Кабели связи"
+    },
+    "price_item": {
+      "id": "1",
+      "material_name": "Кабель ВВГНГ-LS 3х2.5мм2",
+      "description": "Силовой кабель с низким дымо- и газовыделением",
+      "price": 145.5,
+      "currency": "RUB",
+      "supplier": "ЭлектроТорг ООО",
+      "category": "Кабели",
+      "brand": "Рыбинсккабель",
+      "unit": "м",
+      "specifications": {
+        "voltage": "660В",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "updated_at": "2025-09-12T00:00:21.837224",
+      "full_text": "Кабель ВВГНГ-LS 3х2.5мм2 Силовой кабель с низким дымо- и газовыделением Рыбинсккабель Кабели ЭлектроТорг ООО"
+    },
+    "similarity_percentage": 45.71,
+    "similarity_details": {
+      "name": 42.46,
+      "description": 32.61,
+      "category": 80.0,
+      "brand": 18.0,
+      "specifications": 75.0
+    },
+    "elasticsearch_score": 9.6457
+  },
+  {
+    "material": {
+      "id": "5",
+      "name": "Щит электрический ЩРН-12",
+      "description": "Щит распределительный навесной на 12 модулей",
+      "category": "Распределительные щиты",
+      "brand": "IEK",
+      "model": "ЩРН-П-12",
+      "specifications": {
+        "modules": 12,
+        "mounting": "навесной",
+        "material": "пластик"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831577",
+      "full_text": "Щит электрический ЩРН-12 Щит распределительный навесной на 12 модулей IEK ЩРН-П-12 Распределительные щиты"
+    },
+    "price_item": {
+      "id": "5",
+      "material_name": "Распределительный щит ЩРН-12 модулей",
+      "description": "Пластиковый щит навесного монтажа",
+      "price": 1250.0,
+      "currency": "RUB",
+      "supplier": "ИЭК Групп",
+      "category": "Щитовое оборудование",
+      "brand": "IEK",
+      "unit": "шт",
+      "specifications": {
+        "modules": 12,
+        "mounting": "навесной"
+      },
+      "updated_at": "2025-09-12T00:00:21.837289",
+      "full_text": "Распределительный щит ЩРН-12 модулей Пластиковый щит навесного монтажа IEK Щитовое оборудование ИЭК Групп"
+    },
+    "similarity_percentage": 53.71,
+    "similarity_details": {
+      "name": 41.73,
+      "description": 42.14,
+      "category": 23.93,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 30.9931
+  },
+  {
+    "material": {
+      "id": "5",
+      "name": "Щит электрический ЩРН-12",
+      "description": "Щит распределительный навесной на 12 модулей",
+      "category": "Распределительные щиты",
+      "brand": "IEK",
+      "model": "ЩРН-П-12",
+      "specifications": {
+        "modules": 12,
+        "mounting": "навесной",
+        "material": "пластик"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831577",
+      "full_text": "Щит электрический ЩРН-12 Щит распределительный навесной на 12 модулей IEK ЩРН-П-12 Распределительные щиты"
+    },
+    "price_item": {
+      "id": "15",
+      "material_name": "Щиток ЩР 18 модулей",
+      "description": "Металлический распределительный щит",
+      "price": 1890.0,
+      "currency": "RUB",
+      "supplier": "МетЩит",
+      "category": "Щитовое оборудование",
+      "brand": "EKF",
+      "unit": "шт",
+      "specifications": {
+        "modules": 18,
+        "material": "металл"
+      },
+      "updated_at": "2025-09-12T00:00:21.837458",
+      "full_text": "Щиток ЩР 18 модулей Металлический распределительный щит EKF Щитовое оборудование МетЩит"
+    },
+    "similarity_percentage": 40.8,
+    "similarity_details": {
+      "name": 29.62,
+      "description": 56.83,
+      "category": 23.93,
+      "brand": 67.0,
+      "specifications": 39.5
+    },
+    "elasticsearch_score": 11.9881
+  },
+  {
+    "material": {
+      "id": "8",
+      "name": "Труба ПВХ Ø20мм",
+      "description": "Труба гофрированная для прокладки кабеля",
+      "category": "Кабеленесущие системы",
+      "brand": "DKC",
+      "model": "91920",
+      "specifications": {
+        "diameter": "20мм",
+        "material": "ПВХ",
+        "type": "гофрированная"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831613",
+      "full_text": "Труба ПВХ Ø20мм Труба гофрированная для прокладки кабеля DKC 91920 Кабеленесущие системы"
+    },
+    "price_item": {
+      "id": "8",
+      "material_name": "Труба гофр. ПВХ d20мм DKC",
+      "description": "Гофрированная труба для электропроводки",
+      "price": 15.75,
+      "currency": "RUB",
+      "supplier": "ДКС Трейд",
+      "category": "Кабельные каналы",
+      "brand": "DKC",
+      "unit": "м",
+      "specifications": {
+        "diameter": "20мм",
+        "material": "ПВХ"
+      },
+      "updated_at": "2025-09-12T00:00:21.837328",
+      "full_text": "Труба гофр. ПВХ d20мм DKC Гофрированная труба для электропроводки DKC Кабельные каналы ДКС Трейд"
+    },
+    "similarity_percentage": 69.35,
+    "similarity_details": {
+      "name": 65.31,
+      "description": 61.68,
+      "category": 39.26,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 25.5594
+  },
+  {
+    "material": {
+      "id": "7",
+      "name": "Выключатель одноклавишный",
+      "description": "Выключатель освещения одноклавишный",
+      "category": "Установочные изделия",
+      "brand": "Legrand",
+      "model": "Valena Life",
+      "specifications": {
+        "keys": 1,
+        "color": "белый",
+        "type": "скрытой установки"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831600",
+      "full_text": "Выключатель одноклавишный Выключатель освещения одноклавишный Legrand Valena Life Установочные изделия"
+    },
+    "price_item": {
+      "id": "7",
+      "material_name": "Выключатель Valena Life 1-клавишный",
+      "description": "Выключатель освещения белый",
+      "price": 189.0,
+      "currency": "RUB",
+      "supplier": "Legrand Russia",
+      "category": "Электроустановочные",
+      "brand": "Legrand",
+      "unit": "шт",
+      "specifications": {
+        "keys": 1,
+        "color": "белый"
+      },
+      "updated_at": "2025-09-12T00:00:21.837318",
+      "full_text": "Выключатель Valena Life 1-клавишный Выключатель освещения белый Legrand Электроустановочные Legrand Russia"
+    },
+    "similarity_percentage": 69.4,
+    "similarity_details": {
+      "name": 54.74,
+      "description": 73.78,
+      "category": 51.65,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 6.7262
+  },
+  {
+    "material": {
+      "id": "7",
+      "name": "Выключатель одноклавишный",
+      "description": "Выключатель освещения одноклавишный",
+      "category": "Установочные изделия",
+      "brand": "Legrand",
+      "model": "Valena Life",
+      "specifications": {
+        "keys": 1,
+        "color": "белый",
+        "type": "скрытой установки"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831600",
+      "full_text": "Выключатель одноклавишный Выключатель освещения одноклавишный Legrand Valena Life Установочные изделия"
+    },
+    "price_item": {
+      "id": "14",
+      "material_name": "Розетка двойная Legrand",
+      "description": "Двухместная розетка с заземлением",
+      "price": 385.0,
+      "currency": "RUB",
+      "supplier": "Legrand Russia",
+      "category": "Электроустановочные",
+      "brand": "Legrand",
+      "unit": "шт",
+      "specifications": {
+        "sockets": 2,
+        "grounding": true
+      },
+      "updated_at": "2025-09-12T00:00:21.837396",
+      "full_text": "Розетка двойная Legrand Двухместная розетка с заземлением Legrand Электроустановочные Legrand Russia"
+    },
+    "similarity_percentage": 37.65,
+    "similarity_details": {
+      "name": 25.43,
+      "description": 23.68,
+      "category": 51.65,
+      "brand": 100.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 8.164
+  },
+  {
+    "material": {
+      "id": "7",
+      "name": "Выключатель одноклавишный",
+      "description": "Выключатель освещения одноклавишный",
+      "category": "Установочные изделия",
+      "brand": "Legrand",
+      "model": "Valena Life",
+      "specifications": {
+        "keys": 1,
+        "color": "белый",
+        "type": "скрытой установки"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831600",
+      "full_text": "Выключатель одноклавишный Выключатель освещения одноклавишный Legrand Valena Life Установочные изделия"
+    },
+    "price_item": {
+      "id": "2",
+      "material_name": "Автомат защиты S201-C16 ABB",
+      "description": "Автоматический выключатель однополюсный",
+      "price": 890.0,
+      "currency": "RUB",
+      "supplier": "АББ-Поставка",
+      "category": "Автоматика",
+      "brand": "ABB",
+      "unit": "шт",
+      "specifications": {
+        "current": "16А",
+        "poles": 1
+      },
+      "updated_at": "2025-09-12T00:00:21.837247",
+      "full_text": "Автомат защиты S201-C16 ABB Автоматический выключатель однополюсный ABB Автоматика АББ-Поставка"
+    },
+    "similarity_percentage": 23.38,
+    "similarity_details": {
+      "name": 21.88,
+      "description": 44.35,
+      "category": 18.4,
+      "brand": 20.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 3.4237
+  },
+  {
+    "material": {
+      "id": "7",
+      "name": "Выключатель одноклавишный",
+      "description": "Выключатель освещения одноклавишный",
+      "category": "Установочные изделия",
+      "brand": "Legrand",
+      "model": "Valena Life",
+      "specifications": {
+        "keys": 1,
+        "color": "белый",
+        "type": "скрытой установки"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831600",
+      "full_text": "Выключатель одноклавишный Выключатель освещения одноклавишный Legrand Valena Life Установочные изделия"
+    },
+    "price_item": {
+      "id": "12",
+      "material_name": "Автомат Schneider Electric C20",
+      "description": "Автоматический выключатель 20А",
+      "price": 750.5,
+      "currency": "RUB",
+      "supplier": "Schneider Group",
+      "category": "Автоматика",
+      "brand": "Schneider Electric",
+      "unit": "шт",
+      "specifications": {
+        "current": "20А",
+        "type": "C"
+      },
+      "updated_at": "2025-09-12T00:00:21.837374",
+      "full_text": "Автомат Schneider Electric C20 Автоматический выключатель 20А Schneider Electric Автоматика Schneider Group"
+    },
+    "similarity_percentage": 20.58,
+    "similarity_details": {
+      "name": 11.85,
+      "description": 38.56,
+      "category": 18.4,
+      "brand": 24.0,
+      "specifications": 17.71
+    },
+    "elasticsearch_score": 3.4237
+  },
+  {
+    "material": {
+      "id": "7",
+      "name": "Выключатель одноклавишный",
+      "description": "Выключатель освещения одноклавишный",
+      "category": "Установочные изделия",
+      "brand": "Legrand",
+      "model": "Valena Life",
+      "specifications": {
+        "keys": 1,
+        "color": "белый",
+        "type": "скрытой установки"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831600",
+      "full_text": "Выключатель одноклавишный Выключатель освещения одноклавишный Legrand Valena Life Установочные изделия"
+    },
+    "price_item": {
+      "id": "11",
+      "material_name": "Кабель NYM 3x2.5",
+      "description": "Установочный кабель немецкого стандарта",
+      "price": 165.8,
+      "currency": "RUB",
+      "supplier": "Европровод",
+      "category": "Кабели",
+      "brand": "Prysmian",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "2.5мм2",
+        "standard": "NYM"
+      },
+      "updated_at": "2025-09-12T00:00:21.837363",
+      "full_text": "Кабель NYM 3x2.5 Установочный кабель немецкого стандарта Prysmian Кабели Европровод"
+    },
+    "similarity_percentage": 20.27,
+    "similarity_details": {
+      "name": 14.82,
+      "description": 24.1,
+      "category": 23.48,
+      "brand": 40.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 4.3978
+  },
+  {
+    "material": {
+      "id": "10",
+      "name": "Провод ПВС 3x1.5",
+      "description": "Провод соединительный гибкий",
+      "category": "Кабели и провода",
+      "brand": "Электрокабель",
+      "model": "ПВС 3x1.5",
+      "specifications": {
+        "cores": 3,
+        "section": "1.5мм2",
+        "flexibility": "гибкий"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831651",
+      "full_text": "Провод ПВС 3x1.5 Провод соединительный гибкий Электрокабель ПВС 3x1.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "10",
+      "material_name": "ПВС 3x1.5 гибкий провод",
+      "description": "Соединительный провод для бытовых приборов",
+      "price": 45.2,
+      "currency": "RUB",
+      "supplier": "Электрокабель",
+      "category": "Провода",
+      "brand": "Электрокабель",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "1.5мм2"
+      },
+      "updated_at": "2025-09-12T00:00:21.837352",
+      "full_text": "ПВС 3x1.5 гибкий провод Соединительный провод для бытовых приборов Электрокабель Провода Электрокабель"
+    },
+    "similarity_percentage": 78.0,
+    "similarity_details": {
+      "name": 72.82,
+      "description": 59.36,
+      "category": 80.0,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 28.2734
+  },
+  {
+    "material": {
+      "id": "10",
+      "name": "Провод ПВС 3x1.5",
+      "description": "Провод соединительный гибкий",
+      "category": "Кабели и провода",
+      "brand": "Электрокабель",
+      "model": "ПВС 3x1.5",
+      "specifications": {
+        "cores": 3,
+        "section": "1.5мм2",
+        "flexibility": "гибкий"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831651",
+      "full_text": "Провод ПВС 3x1.5 Провод соединительный гибкий Электрокабель ПВС 3x1.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "1",
+      "material_name": "Кабель ВВГНГ-LS 3х2.5мм2",
+      "description": "Силовой кабель с низким дымо- и газовыделением",
+      "price": 145.5,
+      "currency": "RUB",
+      "supplier": "ЭлектроТорг ООО",
+      "category": "Кабели",
+      "brand": "Рыбинсккабель",
+      "unit": "м",
+      "specifications": {
+        "voltage": "660В",
+        "cores": 3,
+        "section": "2.5мм2"
+      },
+      "updated_at": "2025-09-12T00:00:21.837224",
+      "full_text": "Кабель ВВГНГ-LS 3х2.5мм2 Силовой кабель с низким дымо- и газовыделением Рыбинсккабель Кабели ЭлектроТорг ООО"
+    },
+    "similarity_percentage": 26.21,
+    "similarity_details": {
+      "name": 24.93,
+      "description": 26.74,
+      "category": 80.0,
+      "brand": 54.0,
+      "specifications": 82.62
+    },
+    "elasticsearch_score": 7.7713
+  },
+  {
+    "material": {
+      "id": "10",
+      "name": "Провод ПВС 3x1.5",
+      "description": "Провод соединительный гибкий",
+      "category": "Кабели и провода",
+      "brand": "Электрокабель",
+      "model": "ПВС 3x1.5",
+      "specifications": {
+        "cores": 3,
+        "section": "1.5мм2",
+        "flexibility": "гибкий"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831651",
+      "full_text": "Провод ПВС 3x1.5 Провод соединительный гибкий Электрокабель ПВС 3x1.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "6",
+      "material_name": "Кабель UTP Cat5e 4 пары",
+      "description": "Витая пара для сетей Ethernet",
+      "price": 28.5,
+      "currency": "RUB",
+      "supplier": "КабельСвязь",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "unit": "м",
+      "specifications": {
+        "category": "Cat.5e",
+        "pairs": 4
+      },
+      "updated_at": "2025-09-12T00:00:21.837302",
+      "full_text": "Кабель UTP Cat5e 4 пары Витая пара для сетей Ethernet Hyperline Кабели связи КабельСвязь"
+    },
+    "similarity_percentage": 24.07,
+    "similarity_details": {
+      "name": 18.64,
+      "description": 28.11,
+      "category": 55.28,
+      "brand": 18.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 4.4734
+  },
+  {
+    "material": {
+      "id": "10",
+      "name": "Провод ПВС 3x1.5",
+      "description": "Провод соединительный гибкий",
+      "category": "Кабели и провода",
+      "brand": "Электрокабель",
+      "model": "ПВС 3x1.5",
+      "specifications": {
+        "cores": 3,
+        "section": "1.5мм2",
+        "flexibility": "гибкий"
+      },
+      "unit": "м",
+      "created_at": "2025-09-12T00:00:21.831651",
+      "full_text": "Провод ПВС 3x1.5 Провод соединительный гибкий Электрокабель ПВС 3x1.5 Кабели и провода"
+    },
+    "price_item": {
+      "id": "11",
+      "material_name": "Кабель NYM 3x2.5",
+      "description": "Установочный кабель немецкого стандарта",
+      "price": 165.8,
+      "currency": "RUB",
+      "supplier": "Европровод",
+      "category": "Кабели",
+      "brand": "Prysmian",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "2.5мм2",
+        "standard": "NYM"
+      },
+      "updated_at": "2025-09-12T00:00:21.837363",
+      "full_text": "Кабель NYM 3x2.5 Установочный кабель немецкого стандарта Prysmian Кабели Европровод"
+    },
+    "similarity_percentage": 24.05,
+    "similarity_details": {
+      "name": 30.35,
+      "description": 24.19,
+      "category": 80.0,
+      "brand": 19.0,
+      "specifications": 82.62
+    },
+    "elasticsearch_score": 10.8994
+  },
+  {
+    "material": {
+      "id": "9",
+      "name": "Светильник потолочный LED 36Вт",
+      "description": "Потолочный светодиодный светильник офисный",
+      "category": "Светотехника",
+      "brand": "Световые Технологии",
+      "model": "OFFICE LINE 36",
+      "specifications": {
+        "power": "36Вт",
+        "type": "потолочный",
+        "application": "офис"
+      },
+      "unit": "шт",
+      "created_at": "2025-09-12T00:00:21.831624",
+      "full_text": "Светильник потолочный LED 36Вт Потолочный светодиодный светильник офисный Световые Технологии OFFICE LINE 36 Светотехника"
+    },
+    "price_item": {
+      "id": "9",
+      "material_name": "Светильник офисный OFFICE LINE 36W",
+      "description": "LED светильник для подвесных потолков",
+      "price": 2450.0,
+      "currency": "RUB",
+      "supplier": "Световые решения",
+      "category": "Освещение",
+      "brand": "Световые Технологии",
+      "unit": "шт",
+      "specifications": {
+        "power": "36Вт",
+        "mounting": "потолочный"
+      },
+      "updated_at": "2025-09-12T00:00:21.837340",
+      "full_text": "Светильник офисный OFFICE LINE 36W LED светильник для подвесных потолков Световые Технологии Освещение Световые решения"
+    },
+    "similarity_percentage": 67.28,
+    "similarity_details": {
+      "name": 62.59,
+      "description": 52.1,
+      "category": 45.51,
+      "brand": 100.0,
+      "specifications": 100.0
+    },
+    "elasticsearch_score": 15.0286
+  }
+]

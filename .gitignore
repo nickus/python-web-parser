@@ -1,4 +1,4 @@
-# IDE
+# IDE settings
 .idea/
 .vscode/
 
@@ -11,7 +11,7 @@ __pycache__/
 # Logs
 *.log
 
-# Virtual env
+# Virtual environments
 venv/
 .env/
 *.env
@@ -19,3 +19,6 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Reserved/accidental files
+nul
