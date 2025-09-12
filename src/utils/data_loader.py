@@ -480,6 +480,36 @@ class PriceListLoader:
         return price_items
 
 
+class DataLoader:
+    """Универсальный загрузчик данных - объединяет функционал MaterialLoader и PriceListLoader"""
+    
+    def load_materials(self, file_path: str) -> List[Material]:
+        """Загрузка материалов из файла (автоопределение формата)"""
+        file_path = Path(file_path)
+        
+        if file_path.suffix.lower() == '.csv':
+            return MaterialLoader.load_from_csv(str(file_path))
+        elif file_path.suffix.lower() in ['.xlsx', '.xls']:
+            return MaterialLoader.load_from_excel(str(file_path))
+        elif file_path.suffix.lower() == '.json':
+            return MaterialLoader.load_from_json(str(file_path))
+        else:
+            raise ValueError(f"Неподдерживаемый формат файла: {file_path.suffix}")
+    
+    def load_price_list(self, file_path: str) -> List[PriceListItem]:
+        """Загрузка прайс-листа из файла (автоопределение формата)"""
+        file_path = Path(file_path)
+        
+        if file_path.suffix.lower() == '.csv':
+            return PriceListLoader.load_from_csv(str(file_path))
+        elif file_path.suffix.lower() in ['.xlsx', '.xls']:
+            return PriceListLoader.load_from_excel(str(file_path))
+        elif file_path.suffix.lower() == '.json':
+            return PriceListLoader.load_from_json(str(file_path))
+        else:
+            raise ValueError(f"Неподдерживаемый формат файла: {file_path.suffix}")
+
+
 class DataExporter:
     """Экспортер результатов поиска"""
     

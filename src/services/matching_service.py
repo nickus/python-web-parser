@@ -96,7 +96,8 @@ class MaterialMatchingService:
                               materials: List[Material],
                               similarity_threshold: float = 20.0,
                               max_results_per_material: int = 10,
-                              max_workers: int = 4) -> Dict[str, List[SearchResult]]:
+                              max_workers: int = 4,
+                              progress_callback=None) -> Dict[str, List[SearchResult]]:
         """
         Пакетное сопоставление материалов с прайс-листом
         
@@ -105,6 +106,7 @@ class MaterialMatchingService:
             similarity_threshold: Минимальный процент похожести
             max_results_per_material: Максимальное количество результатов на материал
             max_workers: Количество потоков для параллельной обработки
+            progress_callback: Функция обратного вызова для отслеживания прогресса (processed, total, current_material)
             
         Returns:
             Словарь где ключ - ID материала, значение - список результатов поиска
@@ -135,12 +137,29 @@ class MaterialMatchingService:
                     
                     with self.lock:
                         completed_count += 1
+                        
+                        # Вызов прогресс callback если предоставлен
+                        if progress_callback:
+                            try:
+                                progress_callback(completed_count, total_count, material.name)
+                            except Exception as e:
+                                logger.warning(f"Progress callback error: {e}")
+                        
                         if completed_count % 10 == 0:
                             logger.info(f"Completed matching for {completed_count}/{total_count} materials")
                             
                 except Exception as e:
                     logger.error(f"Error matching material {material.id}: {e}")
                     results[material.id] = []
+                    
+                    # Все равно обновляем прогресс даже при ошибке
+                    with self.lock:
+                        completed_count += 1
+                        if progress_callback:
+                            try:
+                                progress_callback(completed_count, total_count, material.name if material else "Unknown")
+                            except Exception as e:
+                                logger.warning(f"Progress callback error: {e}")
         
         logger.info(f"Batch matching completed. Processed {completed_count} materials")
         return results

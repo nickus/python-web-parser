@@ -34,6 +34,17 @@ class DebugLogger:
         if log_to_console:
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setFormatter(formatter)
+            # Добавим обработчик для проблем с кодировкой
+            try:
+                import io
+                if hasattr(sys.stdout, 'encoding') and sys.stdout.encoding == 'cp1251':
+                    # Создаем безопасный wrapper для cp1251
+                    console_handler = logging.StreamHandler(
+                        io.TextIOWrapper(sys.stdout.buffer, encoding='cp1251', errors='replace')
+                    )
+                    console_handler.setFormatter(formatter)
+            except:
+                pass  # Если что-то пошло не так, используем стандартный обработчик
             self.logger.addHandler(console_handler)
         
         # Файловый вывод
