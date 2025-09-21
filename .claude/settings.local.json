@@ -20,7 +20,10 @@
       "Bash(set PYTHONIOENCODING=utf-8)",
       "Bash(dir logs)",
       "Bash(chcp:*)",
-      "Bash(.venv/Scripts/python.exe test_fixes.py:*)"
+      "Bash(.venv/Scripts/python.exe test_fixes.py:*)",
+      "Bash(.venv/Scripts/python.exe main.py:*)",
+      "Bash(del test_modern_gui.py)",
+      "Bash(.venv/Scripts/python.exe:*)"
     ],
     "deny": [],
     "ask": []

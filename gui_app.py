@@ -792,6 +792,8 @@ class MaterialMatcherGUI:
     
     def update_start_button_state(self):
         """Обновление состояния кнопки запуска"""
+        self.log_message(f"[DEBUG] Проверка кнопки: materials={len(self.materials) if self.materials else 0}, price_items={len(self.price_items) if self.price_items else 0}, app={self.app is not None}")
+        
         if self.materials and self.price_items and self.app:
             # Проверяем подключение к Elasticsearch в отдельном потоке
             def check():
@@ -1609,6 +1611,11 @@ class MaterialMatcherGUI:
                     self.root.after(0, lambda: self.log_message("[INFO] Запуск автоматической индексации..."))
                     self.root.after(0, lambda: self.index_data(show_warning=False))
                     self.root.after(0, lambda: self.log_message("[OK] Система готова к работе!"))
+                    # Добавляем паузу и проверку кнопки после индексации
+                    time.sleep(2.0)
+                    self.root.after(0, self.update_start_button_state)
+                    # Принудительная проверка кнопки через таймер
+                    self.root.after(3000, self.update_start_button_state)
                 else:
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     
