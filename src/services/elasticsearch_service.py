@@ -575,7 +575,7 @@ class ElasticsearchService:
             },
             "size": size,
             "request_cache": True,
-            "_source": ["material_name", "description", "price", "currency", "supplier", "category", "brand"]
+            "_source": ["material_name", "description", "price", "currency", "supplier", "category", "brand", "article", "class_code"]
         }
         
         try:

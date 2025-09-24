@@ -85,6 +85,8 @@ class MatchingResultFormatter:
                     "relevance": round(result.similarity_percentage / 100, 4),  # Переводим в диапазон 0-1
                     "supplier": result.price_item.supplier,
                     "brand": result.price_item.brand or "",
+                    "article": result.price_item.article or "",
+                    "class_code": result.price_item.class_code or "",
                     "similarity_details": {
                         "name": result.similarity_details.get("name", 0),
                         "description": result.similarity_details.get("description", 0),

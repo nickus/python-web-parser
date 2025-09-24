@@ -246,33 +246,6 @@ class MaterialMatcherGUI:
         tab = ttk.Frame(self.notebook)
         self.notebook.add(tab, text="📊 Результаты")
         
-        # Статистика
-        stats_frame = ttk.LabelFrame(tab, text="Статистика", padding=10)
-        stats_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        stats_grid = ttk.Frame(stats_frame)
-        stats_grid.pack()
-        
-        # Создаем метки для статистики
-        self.stats_labels = {}
-        stats_items = [
-            ("total_materials", "Всего материалов:"),
-            ("materials_with_matches", "С найденными соответствиями:"),
-            ("total_matches", "Общее количество соответствий:"),
-            ("avg_similarity", "Средняя похожесть:")
-        ]
-        
-        for i, (key, text) in enumerate(stats_items):
-            row = i // 2
-            col = i % 2
-            
-            frame = ttk.Frame(stats_grid)
-            frame.grid(row=row, column=col, padx=10, pady=2, sticky="w")
-            
-            ttk.Label(frame, text=text).pack(side=tk.LEFT)
-            self.stats_labels[key] = ttk.Label(frame, text="0", font=('Arial', 10, 'bold'))
-            self.stats_labels[key].pack(side=tk.LEFT, padx=(5,0))
-        
         # Результаты
         results_frame = ttk.LabelFrame(tab, text="Результаты сопоставления", padding=10)
         results_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -280,8 +253,15 @@ class MaterialMatcherGUI:
         # Переключатель режимов просмотра
         view_controls_frame = ttk.Frame(results_frame)
         view_controls_frame.pack(fill=tk.X, pady=(0, 10))
-        
-        # Убираем кнопки режимов просмотра - используем только древовидный режим
+
+        # Кнопки управления
+        auto_select_btn = ttk.Button(view_controls_frame, text="🎯 Автовыбор",
+                                   command=self.auto_select_all_variants)
+        auto_select_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+        expand_all_btn = ttk.Button(view_controls_frame, text="📂 Раскрыть все",
+                                  command=self.expand_all_materials)
+        expand_all_btn.pack(side=tk.LEFT)
         
         # Контейнер для результатов
         self.results_container = ttk.Frame(results_frame)
@@ -289,67 +269,105 @@ class MaterialMatcherGUI:
         
         # Создаем дерево результатов с поддержкой выбора
         # Добавляем столбцы материалов (голубые) и прайс-листа (розовые)
-        columns = ("material_code", "material_manufacturer", "separator1",
-                  "variant_name", "price_brand", "price_article", "relevance", "separator2",
-                  "price", "supplier", "category")
+        columns = ("material_code", "material_manufacturer",
+                  "variant_name", "price_article", "price_brand", "relevance",
+                  "etm_code", "price")
         
-        # Настраиваем стиль для Treeview с границами
+        # Настраиваем Excel-like стиль для Treeview
         style = ttk.Style()
-        style.configure("Bordered.Treeview", 
-                       relief="solid", 
+        style.theme_use("clam")
+        style.configure("Excel.Treeview",
+                       background="white",
+                       fieldbackground="white",
+                       bordercolor="black",
                        borderwidth=1,
-                       fieldbackground="white")
-        style.configure("Bordered.Treeview.Heading", 
-                       relief="solid", 
+                       relief="solid",
+                       font=('Segoe UI', 9))
+        style.configure("Excel.Treeview.Heading",
+                       background="#E0E0E0",
+                       bordercolor="black",
                        borderwidth=1,
-                       background="#E0E0E0")
+                       relief="solid",
+                       font=('Segoe UI', 9, 'bold'),
+                       foreground="black")
+
+        # Настраиваем стили для выделения строк
+        style.map("Excel.Treeview",
+                 background=[('selected', '#4A90E2')],
+                 foreground=[('selected', 'white')])
+
+        # Дополнительные стили для выделения выбранных вариантов
+        style.configure("Excel.Treeview.Item",
+                       background="white",
+                       foreground="black")
+        style.configure("Excel.Treeview.Selected",
+                       background="#E6FFE6",
+                       foreground="darkgreen",
+                       font=('Segoe UI', 9, 'bold'))
+        style.configure("Excel.Treeview.MaterialWithSelection",
+                       background="#E6F3FF",
+                       foreground="darkblue",
+                       font=('Segoe UI', 9, 'bold'))
         
-        self.results_tree = ttk.Treeview(self.results_container, columns=columns, show="tree headings", height=15, style="Bordered.Treeview")
+        self.results_tree = ttk.Treeview(self.results_container, columns=columns, show="tree headings", height=15, style="Excel.Treeview")
         
-        # Настраиваем заголовки с цветовой группировкой
-        self.results_tree.heading("#0", text="📋 Наименования")
-        # Материал (голубая группа)
-        self.results_tree.heading("material_code", text="🔧 Код обор.")
-        self.results_tree.heading("material_manufacturer", text="🏭 Завод изг.")
-        self.results_tree.heading("separator1", text="│")
-        # Прайс-лист (розовая группа)
-        self.results_tree.heading("variant_name", text="🏷️ Name (прайс)")
-        self.results_tree.heading("price_brand", text="🏭 Brand")
-        self.results_tree.heading("price_article", text="🔧 Article")
-        self.results_tree.heading("relevance", text="📊 Релевантность")
-        self.results_tree.heading("separator2", text="│")
-        # Дополнительная информация
-        self.results_tree.heading("price", text="💰 Цена")
-        self.results_tree.heading("supplier", text="🚚 Поставщик")
-        self.results_tree.heading("category", text="📂 Категория")
+        # Настраиваем профессиональные заголовки (Excel-style)
+        self.results_tree.heading("#0", text="Наименование материала")
+        # Материал (источник)
+        self.results_tree.heading("material_code", text="Код обор.")
+        self.results_tree.heading("material_manufacturer", text="Изготовитель")
+        # Прайс-лист (найденные варианты)
+        self.results_tree.heading("variant_name", text="Название (прайс)")
+        self.results_tree.heading("price_article", text="Артикул")
+        self.results_tree.heading("price_brand", text="Бренд")
+        self.results_tree.heading("relevance", text="Релевантность %")
+        # Коммерческая информация
+        self.results_tree.heading("etm_code", text="КОД ETM")
+        self.results_tree.heading("price", text="Цена")
         
-        # Настраиваем ширину колонок
-        self.results_tree.column("#0", width=250, minwidth=200)  # Наименования (увеличено)
-        # Материал (голубая группа)
-        self.results_tree.column("material_code", width=120, minwidth=100)
-        self.results_tree.column("material_manufacturer", width=120, minwidth=100)
-        self.results_tree.column("separator1", width=20, minwidth=20)  # Разделитель
-        # Прайс-лист (розовая группа)
-        self.results_tree.column("variant_name", width=200, minwidth=150)
-        self.results_tree.column("price_brand", width=100, minwidth=80)
-        self.results_tree.column("price_article", width=120, minwidth=100)
-        self.results_tree.column("relevance", width=100, minwidth=80)
-        self.results_tree.column("separator2", width=20, minwidth=20)  # Разделитель
-        # Дополнительная информация
-        self.results_tree.column("price", width=100, minwidth=80)
-        self.results_tree.column("supplier", width=150, minwidth=100)
-        self.results_tree.column("category", width=120, minwidth=100)
+        # Настраиваем ширину колонок (Excel-style)
+        self.results_tree.column("#0", width=280, minwidth=220, anchor="w")  # Наименования материала (увеличено)
+        # Материал (источник)
+        self.results_tree.column("material_code", width=100, minwidth=80, anchor="center")
+        self.results_tree.column("material_manufacturer", width=130, minwidth=100, anchor="w")
+        # Прайс-лист (найденные варианты)
+        self.results_tree.column("variant_name", width=220, minwidth=180, anchor="w")
+        self.results_tree.column("price_article", width=130, minwidth=100, anchor="center")
+        self.results_tree.column("price_brand", width=110, minwidth=90, anchor="w")
+        self.results_tree.column("relevance", width=90, minwidth=70, anchor="center")
+        # Коммерческая информация
+        self.results_tree.column("etm_code", width=100, minwidth=80, anchor="center")
+        self.results_tree.column("price", width=110, minwidth=90, anchor="e")
         
-        # Настраиваем цветовые теги для подсветки столбцов (без relief - не поддерживается ttk)
-        self.results_tree.tag_configure("material_columns", 
-                                       background="#E6F3FF")  # Светло-голубой для материалов
-        self.results_tree.tag_configure("price_columns", 
-                                       background="#FFE6F0")  # Светло-розовый для прайс-листа
-        self.results_tree.tag_configure("selected_variant", 
-                                       background="#E6FFE6", 
-                                       foreground="#006600")  # Зеленый для выбранных
-        self.results_tree.tag_configure("separator", 
-                                       background="#F0F0F0")  # Серый для разделителей
+        # Настраиваем Excel-like цветовые теги
+        self.results_tree.tag_configure("material_columns",
+                                       background="#F0F8FF",  # Светло-голубой для материалов (более приглушенный)
+                                       font=('Segoe UI', 9))
+        self.results_tree.tag_configure("price_columns",
+                                       background="#FFF8F0",  # Светло-персиковый для прайс-листа (более приглушенный)
+                                       font=('Segoe UI', 9))
+        self.results_tree.tag_configure("selected_variant",
+                                       background="#E6FFE6",
+                                       foreground="#006400",  # Темно-зеленый для выбранных
+                                       font=('Segoe UI', 9, 'bold'))
+        self.results_tree.tag_configure("material_with_selection",
+                                       background="#E6F3FF",
+                                       foreground="#003D82",  # Темно-синий для материалов с выбором
+                                       font=('Segoe UI', 9, 'bold'))
+
+        # Настраиваем теги для релевантности (Excel-like цвета)
+        self.results_tree.tag_configure("high",
+                                       background="#E6F7E6",  # Светло-зеленый фон
+                                       foreground="#006400",  # Темно-зеленый текст
+                                       font=('Segoe UI', 9, 'bold'))
+        self.results_tree.tag_configure("medium",
+                                       background="#FFF8E1",  # Светло-желтый фон
+                                       foreground="#FF8C00",  # Темно-оранжевый текст
+                                       font=('Segoe UI', 9))
+        self.results_tree.tag_configure("low",
+                                       background="#FFE6E6",  # Светло-красный фон
+                                       foreground="#B22222",  # Темно-красный текст
+                                       font=('Segoe UI', 9))
         
         # Скроллбары для результатов
         results_v_scroll = ttk.Scrollbar(self.results_container, orient=tk.VERTICAL, command=self.results_tree.yview)
@@ -374,22 +392,6 @@ class MaterialMatcherGUI:
         # Дополнительная отладочная информация
         self.log_message("🔧 Обработчики событий привязаны к дереву результатов")
         
-        # Кнопки экспорта
-        export_frame = ttk.Frame(tab)
-        export_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        ttk.Button(export_frame, text="📋 Экспорт всех результатов (Excel)", 
-                  command=lambda: self.export_results("xlsx")).pack(side=tk.LEFT, padx=5)
-        
-        # Разделитель
-        ttk.Separator(export_frame, orient='vertical').pack(side=tk.LEFT, fill='y', padx=10)
-        
-        ttk.Button(export_frame, text="[OK] Экспорт выбранных (Excel)", 
-                  command=lambda: self.export_selected_results("xlsx")).pack(side=tk.LEFT, padx=5)
-        ttk.Button(export_frame, text="[RESET] Сбросить выборы", 
-                  command=self.reset_selections).pack(side=tk.LEFT, padx=5)
-        ttk.Button(export_frame, text="[UPDATE] Обновить", 
-                  command=self.refresh_results).pack(side=tk.RIGHT, padx=5)
     
     
     def create_status_bar(self):
@@ -957,9 +959,6 @@ class MaterialMatcherGUI:
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
         
-        # Обнуляем статистику
-        for key in self.stats_labels:
-            self.stats_labels[key].config(text="0")
         
         self.start_button.config(state="disabled")
         self.log_message("🧹 Данные очищены")
@@ -1079,11 +1078,6 @@ class MaterialMatcherGUI:
         # Вычисляем статистику
         stats = self.formatter.get_statistics()
         
-        # Обновляем статистику
-        self.stats_labels["total_materials"].config(text=str(stats["total_materials"]))
-        self.stats_labels["materials_with_matches"].config(text=str(stats["materials_with_matches"]))
-        self.stats_labels["total_matches"].config(text=str(stats["total_variants_found"]))
-        self.stats_labels["avg_similarity"].config(text=f"{stats['average_relevance']*100:.1f}%")
         
         # Заполняем результаты с топ-7 вариантами для каждого материала
         # Если нет сохраненного состояния, значит это первый запуск - раскрываем все
@@ -1133,12 +1127,11 @@ class MaterialMatcherGUI:
                     values=(
                         material_code,          # material_code (голубой)
                         material_manufacturer,  # material_manufacturer (голубой)
-                        "│",                   # separator1
                         "",                    # variant_name (пусто для родителя)
-                        "",                    # price_brand (пусто для родителя)
                         "",                    # price_article (пусто для родителя)
+                        "",                    # price_brand (пусто для родителя)
                         "",                    # relevance (пусто для родителя)
-                        "│",                   # separator2
+                        "",                    # etm_code (пусто для родителя)
                         ""                     # price (пусто для родителя)
                     ),
                     tags=("material", "material_columns")
@@ -1158,6 +1151,7 @@ class MaterialMatcherGUI:
                     # Данные прайс-листа (розовые столбцы)
                     price_brand = match.get("brand", "-") or "-"
                     price_article = match.get("article", "-") or "-"
+                    etm_code = match.get("class_code", "-") or "-"
                     
                     # Определяем цветовую индикацию по релевантности
                     tag = "high" if match['relevance'] > 0.7 else "medium" if match['relevance'] > 0.4 else "low"
@@ -1170,15 +1164,14 @@ class MaterialMatcherGUI:
                         values=(
                             material_code,          # material_code (голубой)
                             material_manufacturer,  # material_manufacturer (голубой)
-                            "│",                   # separator1
                             variant_name,          # variant_name (розовый)
-                            price_brand,           # price_brand (розовый)
                             price_article,         # price_article (розовый)
+                            price_brand,           # price_brand (розовый)
                             relevance,             # relevance (розовый)
-                            "│",                   # separator2
+                            etm_code,              # etm_code (КОД ETM)
                             price                  # price
                         ),
-                        tags=tuple(color_tags + [f"variant_{result['material_id']}_{match['variant_id']}"])
+                        tags=tuple(color_tags + [f"variant_{result['material_id']}_{i}"])
                     )
                 
                 # Автоматически раскрываем все материалы (новые) или восстанавливаем состояние (обновление)
@@ -1188,10 +1181,7 @@ class MaterialMatcherGUI:
                     self.log_message(f"   [OK] Раскрываю материал: '{material_name}'")
         
         # Настраиваем цветовые теги
-        self.results_tree.tag_configure("material", font=('Arial', 10, 'bold'))
-        self.results_tree.tag_configure("high", foreground="darkblue")
-        self.results_tree.tag_configure("medium", foreground="darkorange")
-        self.results_tree.tag_configure("low", foreground="darkred")
+        # Теги уже настроены в create_results_tab с Excel-like стилями
         
         # Обработчик двойного клика уже привязан выше через on_smart_click
         
@@ -1344,11 +1334,13 @@ class MaterialMatcherGUI:
             return
         
         # Правильные индексы для извлечения данных варианта из values
-        # Структура: ('', '', '│', 'название', 'бренд', '-', 'похожесть', '│', 'цена')
-        variant_name = values[3] if len(values) > 3 else ""     # Название варианта
+        # Структура: ('material_code', 'material_manufacturer', 'variant_name', 'price_article', 'price_brand', 'relevance', 'etm_code', 'price')
+        variant_name = values[2] if len(values) > 2 else ""     # Название варианта
+        article = values[3] if len(values) > 3 else ""          # Артикул
         brand = values[4] if len(values) > 4 else ""            # Бренд
-        relevance = values[6] if len(values) > 6 else ""        # Процент похожести
-        price = values[8] if len(values) > 8 else ""            # Цена
+        relevance = values[5] if len(values) > 5 else ""        # Процент похожести
+        etm_code = values[6] if len(values) > 6 else ""         # КОД ETM
+        price = values[7] if len(values) > 7 else ""            # Цена
         
         # Сохраняем выбранный вариант
         self.selected_variants[material_id] = {
@@ -1357,6 +1349,8 @@ class MaterialMatcherGUI:
             'relevance': relevance,
             'price': price,
             'brand': brand,
+            'article': article,
+            'etm_code': etm_code,
             'item_id': item
         }
         
@@ -1410,20 +1404,25 @@ class MaterialMatcherGUI:
                 return
 
             # Создаем новые values для материала, сохраняя правильную структуру
-            # Обновляем только колонки с данными варианта (название, бренд, похожесть, цена)
+            # Обновляем только колонки с данными варианта (название, бренд, артикул, похожесть, etm_code, цена)
             current_material_values = list(self.results_tree.item(parent_item, 'values'))
 
             # Обновляем данные материала данными выбранного варианта
-            if len(current_material_values) >= 9 and len(selected_values) >= 9:
+            if len(current_material_values) >= 8 and len(selected_values) >= 8:
                 # Копируем данные варианта в соответствующие позиции материала
-                current_material_values[3] = selected_values[3]   # Название
-                current_material_values[4] = selected_values[4]   # Бренд
-                current_material_values[6] = selected_values[6]   # Похожесть
-                current_material_values[8] = selected_values[8]   # Цена
+                # Структура: (material_code, material_manufacturer, variant_name, price_brand, price_article, relevance, etm_code, price)
+                current_material_values[2] = selected_values[2]   # Название варианта
+                current_material_values[3] = selected_values[3]   # Бренд
+                current_material_values[4] = selected_values[4]   # Артикул
+                current_material_values[5] = selected_values[5]   # Похожесть
+                current_material_values[6] = selected_values[6]   # КОД ETM
+                current_material_values[7] = selected_values[7]   # Цена
 
                 # Обновляем строку материала
                 self.results_tree.item(parent_item, values=current_material_values)
                 self.log_message(f"📊 ДАННЫЕ ВАРИАНТА перенесены в строку материала")
+
+                # Заголовок материала остается без изменений
 
             # Визуальное выделение выбранного варианта
             selected_tags = list(self.results_tree.item(selected_item, 'tags'))
@@ -1437,14 +1436,7 @@ class MaterialMatcherGUI:
                 parent_tags.append('material_with_selection')
                 self.results_tree.item(parent_item, tags=parent_tags)
 
-            # Настраиваем стили для визуального выделения
-            self.results_tree.tag_configure('selected_variant',
-                                           background='lightgreen',
-                                           font=('Arial', 10, 'bold'))
-            self.results_tree.tag_configure('material_with_selection',
-                                           background='lightblue',
-                                           font=('Arial', 11, 'bold'),
-                                           foreground='darkblue')
+            # Стили уже настроены в create_results_tab с Excel-like дизайном
 
             self.log_message(f"🎨 ВИЗУАЛЬНОЕ ВЫДЕЛЕНИЕ: Материал и вариант выделены цветом")
             self.log_message(f"[OK] Структура TreeView НЕ изменена - материалы не схлопнутся!")
@@ -1763,6 +1755,109 @@ class MaterialMatcherGUI:
                 messagebox.showinfo("Готово", "Лог-файлы очищены")
             except Exception as e:
                 messagebox.showerror("Ошибка", f"Ошибка при очистке логов: {str(e)}")
+
+    def auto_select_all_variants(self):
+        """Автоматический выбор наиболее релевантных вариантов для всех материалов"""
+        try:
+            if not hasattr(self, 'results_tree') or not self.results_tree.get_children():
+                messagebox.showwarning("Предупреждение", "Нет результатов для автовыбора")
+                return
+
+            selected_count = 0
+            total_materials = 0
+
+            self.log_message("[DEBUG] Начинаем автоматический выбор вариантов...")
+
+            # Проходим по всем материалам (родительским элементам)
+            for material_item in self.results_tree.get_children():
+                material_text = self.results_tree.item(material_item, 'text')
+                total_materials += 1
+
+                # Получаем дочерние элементы (варианты)
+                variants = self.results_tree.get_children(material_item)
+                self.log_message(f"[DEBUG] Материал '{material_text[:50]}...': найдено {len(variants)} вариантов")
+
+                if variants:
+                    # Находим вариант с наивысшей релевантностью
+                    best_variant = None
+                    best_relevance = -1
+
+                    for i, variant_item in enumerate(variants):
+                        values = self.results_tree.item(variant_item, 'values')
+                        self.log_message(f"[DEBUG]   Вариант {i+1}: values length = {len(values)}")
+                        if len(values) > 5:
+                            self.log_message(f"[DEBUG]   Значения варианта: {values}")
+                            try:
+                                relevance_str = str(values[5])  # Индекс 5 - колонка relevance
+                                self.log_message(f"[DEBUG]   Строка релевантности: '{relevance_str}'")
+
+                                if relevance_str and relevance_str != '':
+                                    # Убираем возможные символы процента и пробелы
+                                    relevance_clean = relevance_str.strip().replace('%', '')
+                                    relevance = float(relevance_clean)
+                                    self.log_message(f"[DEBUG]   Релевантность как число: {relevance}")
+
+                                    if relevance > best_relevance:
+                                        best_relevance = relevance
+                                        best_variant = variant_item
+                                        self.log_message(f"[DEBUG]   Новый лучший вариант с релевантностью {relevance}")
+                            except (ValueError, IndexError) as ex:
+                                self.log_message(f"[DEBUG]   Ошибка парсинга релевантности: {ex}")
+                                continue
+
+                    # Выбираем лучший вариант
+                    if best_variant:
+                        self.log_message(f"[DEBUG] Выбираем лучший вариант с релевантностью {best_relevance}")
+
+                        # Имитируем двойной клик по лучшему варианту
+                        try:
+                            # Создаем фиктивный объект события
+                            class FakeEvent:
+                                def __init__(self):
+                                    self.x = 0
+                                    self.y = 0
+
+                            fake_event = FakeEvent()
+
+                            # Вызываем обработчик двойного клика
+                            self.handle_double_click(fake_event, best_variant)
+                            selected_count += 1
+                            self.log_message(f"[OK] Вариант успешно выбран автоматически")
+                        except Exception as e:
+                            self.log_message(f"[ERROR] Ошибка при автоматическом выборе варианта: {e}")
+                    else:
+                        self.log_message(f"[DEBUG] Лучший вариант не найден для материала")
+
+            self.log_message(f"[OK] Автоматически выбрано {selected_count} из {total_materials} материалов")
+            messagebox.showinfo("Готово", f"Автоматически выбрано {selected_count} из {total_materials} наиболее релевантных вариантов")
+
+        except Exception as e:
+            self.log_message(f"[ERROR] Ошибка при автовыборе: {e}")
+            import traceback
+            self.log_message(f"[ERROR] Traceback: {traceback.format_exc()}")
+            messagebox.showerror("Ошибка", f"Ошибка при автовыборе: {str(e)}")
+
+    def expand_all_materials(self):
+        """Раскрытие всех материалов в дереве результатов"""
+        try:
+            if not hasattr(self, 'results_tree') or not self.results_tree.get_children():
+                messagebox.showwarning("Предупреждение", "Нет результатов для раскрытия")
+                return
+
+            expanded_count = 0
+
+            # Раскрываем все родительские элементы (материалы)
+            for material_item in self.results_tree.get_children():
+                if self.results_tree.get_children(material_item):  # Есть дочерние элементы
+                    self.results_tree.item(material_item, open=True)
+                    expanded_count += 1
+
+            self.log_message(f"[OK] Раскрыто {expanded_count} материалов")
+            messagebox.showinfo("Готово", f"Раскрыто {expanded_count} материалов")
+
+        except Exception as e:
+            self.log_message(f"[ERROR] Ошибка при раскрытии: {e}")
+            messagebox.showerror("Ошибка", f"Ошибка при раскрытии материалов: {str(e)}")
 
     def auto_load_on_startup(self):
         """Автоматическая загрузка файлов при запуске программы"""
