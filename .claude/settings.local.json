@@ -23,7 +23,11 @@
       "Bash(.venv/Scripts/python.exe test_fixes.py:*)",
       "Bash(.venv/Scripts/python.exe main.py:*)",
       "Bash(del test_modern_gui.py)",
-      "Bash(.venv/Scripts/python.exe:*)"
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(.venv\\Scripts\\python.exe:*)",
+      "Bash(.venv\\Scripts\\python.exe test_etm_comprehensive.py:*)",
+      "Bash(del test_etm_id_final.py)",
+      "Bash(.venv\\Scripts\\python.exe main.py:*)"
     ],
     "deny": [],
     "ask": []

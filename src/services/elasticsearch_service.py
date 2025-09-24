@@ -534,7 +534,7 @@ class ElasticsearchService:
             # ОПТИМИЗАЦИЯ 27: Включаем кеширование запросов
             "request_cache": True,
             # Оптимизация: возвращаем только нужные поля для экономии bandwidth
-            "_source": ["name", "description", "category", "brand", "specifications"]
+            "_source": ["id", "name", "description", "category", "brand", "specifications", "type_mark", "equipment_code", "manufacturer", "unit", "quantity"]
         }
         
         try:
@@ -575,7 +575,7 @@ class ElasticsearchService:
             },
             "size": size,
             "request_cache": True,
-            "_source": ["material_name", "description", "price", "currency", "supplier", "category", "brand", "article", "class_code"]
+            "_source": ["id", "material_name", "description", "price", "currency", "supplier", "category", "brand", "article", "class_code", "brand_code", "cli_code"]
         }
         
         try:

@@ -21,6 +21,7 @@ from src.material_matcher_app import MaterialMatcherApp
 from src.utils.json_formatter import MatchingResultFormatter
 from src.utils.debug_logger import get_debug_logger, init_debug_logging
 from src.ui.modern_table_view import ModernTableView
+from src.services.etm_api_service import get_etm_service
 
 
 class MaterialMatcherGUI:
@@ -48,7 +49,8 @@ class MaterialMatcherGUI:
         self.selected_variants = {}  # Выбранные варианты для каждого материала {material_id: selected_match}
         
         # Используется только древовидный режим просмотра результатов
-        
+        self.view_mode = "tree"  # Добавляем недостающий атрибут
+
         # Переменные для обнаружения двойного клика
         self.last_click_time = 0
         self.last_click_item = None
@@ -261,7 +263,11 @@ class MaterialMatcherGUI:
 
         expand_all_btn = ttk.Button(view_controls_frame, text="📂 Раскрыть все",
                                   command=self.expand_all_materials)
-        expand_all_btn.pack(side=tk.LEFT)
+        expand_all_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+        update_prices_btn = ttk.Button(view_controls_frame, text="💰 Обновить цены ETM",
+                                     command=self.update_etm_prices)
+        update_prices_btn.pack(side=tk.LEFT)
         
         # Контейнер для результатов
         self.results_container = ttk.Frame(results_frame)
@@ -1069,11 +1075,44 @@ class MaterialMatcherGUI:
         # DEBUG: Проверяем размеры исходных данных
         self.log_message(f"[DEBUG] Количество материалов в self.results: {len(self.results)}")
         self.log_message(f"[DEBUG] Количество материалов в self.materials_order: {len(self.materials_order) if self.materials_order else 0}")
+
+        # КРИТИЧЕСКИЙ АНАЛИЗ: Проверяем исходные данные self.results
+        for i, (material_id, search_results) in enumerate(list(self.results.items())[:2]):  # Первые 2 материала
+            self.log_message(f"[DEBUG] === ИСХОДНЫЕ ДАННЫЕ МАТЕРИАЛ {i+1} ===")
+            self.log_message(f"[DEBUG] Material ID: {material_id}")
+            self.log_message(f"[DEBUG] Количество SearchResult объектов: {len(search_results)}")
+
+            for j, search_result in enumerate(search_results[:3]):  # Первые 3 результата
+                price_item = search_result.price_item
+                self.log_message(f"[DEBUG]   SearchResult {j+1}:")
+                self.log_message(f"[DEBUG]     price_item.id: '{price_item.id}'")
+                self.log_message(f"[DEBUG]     price_item.name: '{price_item.name[:50]}...'")
+                self.log_message(f"[DEBUG]     price_item.material_name: '{price_item.material_name}'")
+
+                if not price_item.id or price_item.id.strip() == "":
+                    self.log_message(f"[DEBUG]     ⚠️ НАЙДЕНА ПРОБЛЕМА: price_item.id пустой в исходных данных!")
+                break  # Только первый результат для краткости
         
         formatted_results = self.formatter.format_matching_results(self.results, self.materials_order, self.materials)
-        
+
         # DEBUG: Проверяем размер отформатированных результатов
         self.log_message(f"[DEBUG] Количество отформатированных результатов: {len(formatted_results)}")
+
+        # ДЕТАЛЬНЫЙ АНАЛИЗ ДАННЫХ ФОРМАТТЕРА (первые 2 материала)
+        for i, result in enumerate(formatted_results[:2]):
+            material_id = result.get("material_id")
+            material_name = result.get("material_name")
+            matches = result.get("matches", [])
+            self.log_message(f"[DEBUG] === МАТЕРИАЛ {i+1} ===")
+            self.log_message(f"[DEBUG] ID: {material_id}, Название: '{material_name}'")
+            self.log_message(f"[DEBUG] Количество вариантов: {len(matches)}")
+
+            for j, match in enumerate(matches[:3]):  # Первые 3 варианта
+                variant_id = match.get("variant_id", "")
+                variant_name = match.get("variant_name", "")
+                self.log_message(f"[DEBUG]   Вариант {j+1}: variant_id='{variant_id}', name='{variant_name[:50]}...'")
+                if not variant_id or variant_id.strip() == "":
+                    self.log_message(f"[DEBUG]   ⚠️ ПРОБЛЕМА: variant_id пустой в отформатированных данных!")
         
         # Вычисляем статистику
         stats = self.formatter.get_statistics()
@@ -1151,7 +1190,46 @@ class MaterialMatcherGUI:
                     # Данные прайс-листа (розовые столбцы)
                     price_brand = match.get("brand", "-") or "-"
                     price_article = match.get("article", "-") or "-"
-                    etm_code = match.get("class_code", "-") or "-"
+
+                    # Всегда используем столбец variant_id для ETM кода
+                    variant_id = match.get("variant_id", "")
+
+                    # ДОПОЛНИТЕЛЬНАЯ ДИАГНОСТИКА ДЛЯ ETM КОДА
+                    if i < 3:  # Логируем только первые 3 варианта
+                        self.log_message(f"[ETM DEBUG] Вариант {i+1}:")
+                        self.log_message(f"[ETM DEBUG]   match keys: {list(match.keys())}")
+                        self.log_message(f"[ETM DEBUG]   variant_id raw: {repr(variant_id)}")
+                        self.log_message(f"[ETM DEBUG]   variant_id type: {type(variant_id)}")
+
+                        # Проверим также другие возможные поля с ID
+                        alternative_ids = []
+                        for key in ['id', 'article', 'brand_code', 'cli_code']:
+                            value = match.get(key, "")
+                            if value and str(value).strip():
+                                alternative_ids.append(f"{key}={repr(value)}")
+
+                        if alternative_ids:
+                            self.log_message(f"[ETM DEBUG]   alternative_ids: {', '.join(alternative_ids)}")
+
+                    if variant_id and str(variant_id).strip():
+                        etm_code = str(variant_id).strip()
+                    else:
+                        # ИСПРАВЛЕНИЕ: Если variant_id пустой, попробуем альтернативные поля
+                        etm_code = "-"
+
+                        # Пробуем найти ID в других полях (приоритет: article -> id -> brand_code)
+                        for fallback_key in ['article', 'id', 'brand_code']:
+                            fallback_value = match.get(fallback_key, "")
+                            if fallback_value and str(fallback_value).strip():
+                                etm_code = str(fallback_value).strip()
+                                if i < 3:  # Логируем только первые 3
+                                    self.log_message(f"[ETM FIX] Используем {fallback_key} как ETM код: '{etm_code}'")
+                                break
+
+                    if i < 3:
+                        self.log_message(f"[DEBUG] Заполнение таблицы - материал {material_name}, вариант {i+1}:")
+                        self.log_message(f"[DEBUG]   variant_id: '{variant_id}'")
+                        self.log_message(f"[DEBUG]   В столбце КОД ETM будет отображаться: '{etm_code}'")
                     
                     # Определяем цветовую индикацию по релевантности
                     tag = "high" if match['relevance'] > 0.7 else "medium" if match['relevance'] > 0.4 else "low"
@@ -1185,9 +1263,9 @@ class MaterialMatcherGUI:
         
         # Обработчик двойного клика уже привязан выше через on_smart_click
         
-        # Обновляем табличный вид если он активен
-        if self.view_mode == "table":
-            self.update_table_view_data()
+        # Обновляем табличный вид если он активен (пока используется только древовидный режим)
+        # if self.view_mode == "table":
+        #     self.update_table_view_data()
     
     def on_variant_select(self, event):
         """Обработка выбора варианта"""
@@ -1339,7 +1417,7 @@ class MaterialMatcherGUI:
         article = values[3] if len(values) > 3 else ""          # Артикул
         brand = values[4] if len(values) > 4 else ""            # Бренд
         relevance = values[5] if len(values) > 5 else ""        # Процент похожести
-        etm_code = values[6] if len(values) > 6 else ""         # КОД ETM
+        etm_code = values[6] if len(values) > 6 else ""         # КОД ETM (id товара)
         price = values[7] if len(values) > 7 else ""            # Цена
         
         # Сохраняем выбранный вариант
@@ -1858,6 +1936,245 @@ class MaterialMatcherGUI:
         except Exception as e:
             self.log_message(f"[ERROR] Ошибка при раскрытии: {e}")
             messagebox.showerror("Ошибка", f"Ошибка при раскрытии материалов: {str(e)}")
+
+    def update_etm_prices(self):
+        """Обновление цен через ETM API"""
+        try:
+            if not hasattr(self, 'results_tree') or not self.results_tree.get_children():
+                messagebox.showwarning("Предупреждение", "Нет результатов для обновления цен")
+                return
+
+            # Собираем все коды ETM из таблицы
+            etm_codes = self._collect_etm_codes()
+            if not etm_codes:
+                messagebox.showinfo("Информация", "Не найдены коды ETM для обновления цен")
+                return
+
+            self.log_message(f"[INFO] Начинаем обновление цен для {len(etm_codes)} кодов ETM...")
+
+            # Запускаем обновление цен в отдельном потоке
+            threading.Thread(
+                target=self._update_prices_thread,
+                args=(etm_codes,),
+                daemon=True
+            ).start()
+
+        except Exception as e:
+            self.log_message(f"[ERROR] Ошибка при запуске обновления цен: {e}")
+            messagebox.showerror("Ошибка", f"Ошибка при обновлении цен: {str(e)}")
+
+
+    def _collect_etm_codes(self):
+        """Сбор всех кодов ETM из таблицы результатов"""
+        etm_codes = set()
+        total_rows_with_etm = 0  # Общее количество строк с ETM кодами
+        all_etm_codes = []       # Все коды (включая дубликаты)
+        total_rows_checked = 0   # Общее количество проверенных строк
+
+        self.log_message(f"[DEBUG] Начинаем сбор ETM кодов из таблицы...")
+
+        for material_item in self.results_tree.get_children():
+            self.log_message(f"[DEBUG] Проверяем материал: {self.results_tree.item(material_item, 'text')}")
+            # Проходим по вариантам каждого материала
+            for variant_item in self.results_tree.get_children(material_item):
+                total_rows_checked += 1
+                values = self.results_tree.item(variant_item, 'values')
+                self.log_message(f"[DEBUG]   Строка {total_rows_checked}: values = {values}")
+
+                if len(values) > 6:  # Проверяем наличие столбца etm_code
+                    etm_code = str(values[6]).strip()  # Индекс 6 - столбец КОД ETM
+                    self.log_message(f"[DEBUG]   ETM код в позиции 6: '{etm_code}'")
+
+                    if etm_code and etm_code != '' and etm_code != '-':
+                        etm_codes.add(etm_code)  # Уникальные коды
+                        all_etm_codes.append(etm_code)  # Все коды
+                        total_rows_with_etm += 1
+                        self.log_message(f"[DEBUG]   ✓ Принят ETM код: {etm_code}")
+                    else:
+                        self.log_message(f"[DEBUG]   ✗ Отклонен ETM код: '{etm_code}' (пустой или прочерк)")
+                else:
+                    self.log_message(f"[DEBUG]   ✗ Недостаточно столбцов: {len(values)} (нужно > 6)")
+
+        self.log_message(f"[DEBUG] Проверено строк всего: {total_rows_checked}")
+
+        unique_count = len(etm_codes)
+        self.log_message(f"[DEBUG] Статистика ETM кодов:")
+        self.log_message(f"[DEBUG]   Общее количество строк с ETM кодами: {total_rows_with_etm}")
+        self.log_message(f"[DEBUG]   Уникальных ETM кодов: {unique_count}")
+
+        if total_rows_with_etm != unique_count:
+            self.log_message(f"[DEBUG]   НАЙДЕНЫ ДУБЛИКАТЫ! Разница: {total_rows_with_etm - unique_count}")
+
+            # Показываем примеры дубликатов
+            from collections import Counter
+            code_counts = Counter(all_etm_codes)
+            duplicates = {code: count for code, count in code_counts.items() if count > 1}
+            if duplicates:
+                self.log_message(f"[DEBUG]   Примеры дубликатов: {dict(list(duplicates.items())[:5])}")
+
+        return list(etm_codes)
+
+    def _update_prices_thread(self, etm_codes):
+        """Фоновое обновление цен через ETM API"""
+        try:
+            etm_service = get_etm_service()
+
+            self.log_message(f"[DEBUG] ETM коды для запроса ({len(etm_codes)} шт.): {etm_codes[:5]}...")
+
+            # Создаем прогресс-диалог
+            self._show_progress_dialog("Обновление цен ETM", len(etm_codes))
+
+            # Сначала проверяем доступность ETM API сервера
+            self.log_message(f"[DEBUG] Проверяем доступность ETM API сервера...")
+            if not etm_service.check_connectivity():
+                error_msg = "ETM API сервер недоступен. Проверьте интернет-соединение и попробуйте позже."
+                self.log_message(f"[ERROR] {error_msg}")
+                self.root.after(0, lambda: messagebox.showerror("Ошибка соединения", error_msg))
+                return
+
+            # Запрашиваем цены
+            self.log_message(f"[DEBUG] Сервер доступен, запрашиваем цены через ETM API...")
+            prices = etm_service.get_prices(
+                etm_codes,
+                progress_callback=self._update_progress
+            )
+
+            self.log_message(f"[DEBUG] Получен ответ от ETM API: {len(prices)} записей")
+            if prices:
+                # Подсчитываем успешные и неудачные результаты
+                successful_prices = {k: v for k, v in prices.items() if v.get('status') == 'success' and v.get('price', 0) > 0}
+                failed_prices = {k: v for k, v in prices.items() if v.get('status') != 'success'}
+
+                self.log_message(f"[DEBUG] Успешных цен: {len(successful_prices)}, неудачных: {len(failed_prices)}")
+                self.log_message(f"[DEBUG] Примеры успешных: {dict(list(successful_prices.items())[:2])}")
+                if failed_prices:
+                    self.log_message(f"[DEBUG] Примеры неудачных: {dict(list(failed_prices.items())[:2])}")
+            else:
+                self.log_message(f"[DEBUG] Пустой ответ от ETM API")
+
+            # Обновляем цены в таблице
+            updated_count = self.root.after(0, self._apply_prices_to_table, prices)
+
+        except Exception as e:
+            from src.services.etm_api_service import EtmApiError
+            if isinstance(e, EtmApiError):
+                # Показываем понятную ошибку ETM API
+                error_msg = f"Ошибка ETM API: {str(e)}"
+                self.log_message(f"[ERROR] {error_msg}")
+                self.root.after(0, lambda: messagebox.showerror("Ошибка ETM API", str(e)))
+            else:
+                # Общая ошибка
+                self.log_message(f"[ERROR] Неожиданная ошибка при обновлении цен: {e}")
+                import traceback
+                self.log_message(f"[ERROR] Traceback: {traceback.format_exc()}")
+                self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Неожиданная ошибка обновления цен: {str(e)}"))
+        finally:
+            # Закрываем прогресс-диалог
+            self.root.after(0, self._close_progress_dialog)
+
+    def _show_progress_dialog(self, title, total):
+        """Показ диалога прогресса"""
+        self.progress_dialog = tk.Toplevel(self.root)
+        self.progress_dialog.title(title)
+        self.progress_dialog.geometry("400x120")
+        self.progress_dialog.transient(self.root)
+        self.progress_dialog.grab_set()
+
+        # Центрируем диалог
+        self.progress_dialog.geometry("+%d+%d" % (
+            self.root.winfo_rootx() + 100,
+            self.root.winfo_rooty() + 100
+        ))
+
+        frame = ttk.Frame(self.progress_dialog, padding="20")
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        self.progress_label = ttk.Label(frame, text="Подготовка...")
+        self.progress_label.pack(pady=(0, 10))
+
+        self.progress_bar = ttk.Progressbar(frame, length=300, mode='determinate')
+        self.progress_bar.pack(fill=tk.X)
+        self.progress_bar['maximum'] = total
+
+    def _update_progress(self, current, total, message):
+        """Обновление прогресса"""
+        def update():
+            if hasattr(self, 'progress_dialog') and self.progress_dialog.winfo_exists():
+                self.progress_label.config(text=message)
+                self.progress_bar['value'] = current
+
+        self.root.after(0, update)
+
+    def _close_progress_dialog(self):
+        """Закрытие диалога прогресса"""
+        if hasattr(self, 'progress_dialog'):
+            self.progress_dialog.destroy()
+
+    def _apply_prices_to_table(self, prices):
+        """Применение обновленных цен к таблице"""
+        rows_updated_with_prices = 0  # Строк с реальными ценами
+        rows_updated_with_dashes = 0  # Строк с прочерками
+        total_rows_processed = 0      # Общее количество обработанных строк
+        unique_codes_with_prices = set()  # Уникальные коды с ценами
+
+        try:
+            self.log_message(f"[DEBUG] Начинаем применение цен к таблице...")
+            self.log_message(f"[DEBUG] Получено ответов от API: {len(prices)}")
+
+            for material_item in self.results_tree.get_children():
+                # Проходим по вариантам каждого материала
+                for variant_item in self.results_tree.get_children(material_item):
+                    values = list(self.results_tree.item(variant_item, 'values'))
+                    if len(values) > 7:  # Проверяем наличие столбцов
+                        etm_code = str(values[6]).strip()  # Индекс 6 - КОД ETM
+
+                        if etm_code in prices:
+                            total_rows_processed += 1
+                            price_data = prices[etm_code]
+
+                            if price_data['status'] == 'success' and price_data.get('price', 0) > 0:
+                                # Есть цена - показываем её
+                                new_price = f"{price_data['price']:.2f} {price_data['currency']}"
+                                values[7] = new_price  # Индекс 7 - столбец цены
+                                rows_updated_with_prices += 1
+                                unique_codes_with_prices.add(etm_code)
+                            else:
+                                # Нет цены - показываем прочерк
+                                values[7] = "-"
+                                rows_updated_with_dashes += 1
+
+                            # Обновляем строку в таблице
+                            self.results_tree.item(variant_item, values=values)
+
+            # Детальная статистика
+            unique_codes_requested = len(prices)
+            unique_codes_with_prices_count = len(unique_codes_with_prices)
+
+            self.log_message(f"[OK] СТАТИСТИКА ОБНОВЛЕНИЯ:")
+            self.log_message(f"[OK]   Уникальных кодов запрошено: {unique_codes_requested}")
+            self.log_message(f"[OK]   Уникальных кодов с ценами: {unique_codes_with_prices_count}")
+            self.log_message(f"[OK]   Строк в таблице обработано: {total_rows_processed}")
+            self.log_message(f"[OK]   Строк обновлено с ценами: {rows_updated_with_prices}")
+            self.log_message(f"[OK]   Строк помечено прочерком: {rows_updated_with_dashes}")
+
+            # Разъяснение, если есть разница между строками и кодами
+            if total_rows_processed > unique_codes_requested:
+                self.log_message(f"[INFO] В таблице есть дубликаты кодов - это нормально")
+
+            if rows_updated_with_prices > 0:
+                messagebox.showinfo("Готово",
+                    f"Получено {unique_codes_with_prices_count} уникальных цен из ETM API\n" +
+                    f"Обновлено {rows_updated_with_prices} строк в таблице\n" +
+                    f"(обработано {total_rows_processed} строк, {rows_updated_with_dashes} без цен)")
+            else:
+                messagebox.showwarning("Результат",
+                    f"Цены не получены\n" +
+                    f"Запрошено {unique_codes_requested} кодов, обработано {total_rows_processed} строк\n" +
+                    f"Все строки помечены прочерками")
+
+        except Exception as e:
+            self.log_message(f"[ERROR] Ошибка при применении цен: {e}")
+            messagebox.showerror("Ошибка", f"Ошибка при применении цен: {str(e)}")
 
     def auto_load_on_startup(self):
         """Автоматическая загрузка файлов при запуске программы"""

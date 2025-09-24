@@ -78,15 +78,35 @@ class MatchingResultFormatter:
             # Форматируем каждый вариант
             matches = []
             for result in sorted_results:
+                # ИСПРАВЛЕНИЕ: Убеждаемся что variant_id всегда заполнен
+                variant_id = result.price_item.id
+
+                # Если основной ID пустой, используем альтернативные поля
+                if not variant_id or str(variant_id).strip() == "":
+                    # Пробуем альтернативные поля в порядке приоритета
+                    for alt_field in ['article', 'brand_code', 'cli_code']:
+                        alt_value = getattr(result.price_item, alt_field, None)
+                        if alt_value and str(alt_value).strip():
+                            variant_id = str(alt_value).strip()
+                            break
+
+                    # Если ничего не найдено, генерируем уникальный ID
+                    if not variant_id or str(variant_id).strip() == "":
+                        variant_id = f"auto_{hash(result.price_item.name[:50])}"[:12]
+
                 match = {
-                    "variant_id": result.price_item.id,
-                    "variant_name": result.price_item.material_name,
+                    "variant_id": str(variant_id).strip(),  # Гарантируем строку
+                    "variant_name": result.price_item.material_name or result.price_item.name,
                     "price": result.price_item.price,
                     "relevance": round(result.similarity_percentage / 100, 4),  # Переводим в диапазон 0-1
                     "supplier": result.price_item.supplier,
                     "brand": result.price_item.brand or "",
                     "article": result.price_item.article or "",
                     "class_code": result.price_item.class_code or "",
+                    # Добавляем дополнительные поля для отладки
+                    "id": result.price_item.id or "",  # Оригинальный ID
+                    "brand_code": result.price_item.brand_code or "",
+                    "cli_code": result.price_item.cli_code or "",
                     "similarity_details": {
                         "name": result.similarity_details.get("name", 0),
                         "description": result.similarity_details.get("description", 0),

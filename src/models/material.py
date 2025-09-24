@@ -159,7 +159,7 @@ class PriceListItem:
                 price = None
         
         return cls(
-            id=str(data.get('id', '')),
+            id=str(data.get('id') or ''),  # Используем or для правильной обработки None
             name=data.get('name', data.get('material_name', '')),
             brand=data.get('brand'),
             article=data.get('article'),
