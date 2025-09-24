@@ -259,13 +259,16 @@ def interactive_setup():
 
 
 def load_config(config_path: str = None):
-    """Загрузка конфигурации приложения"""
+    """Загрузка оптимизированной конфигурации приложения"""
     default_config = {
         "elasticsearch": {
             "host": "localhost",
             "port": 9200,
             "username": None,
-            "password": None
+            "password": None,
+            # ОПТИМИЗАЦИЯ: Добавляем новые параметры производительности
+            "bulk_size": 750,
+            "max_workers": 4
         },
         "matching": {
             "similarity_threshold": 20.0,

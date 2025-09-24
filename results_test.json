@@ -1,0 +1,400 @@
+[
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "11",
+      "material_name": "Кабель NYM 3x2.5",
+      "description": "Установочный кабель немецкого стандарта",
+      "price": 165.8,
+      "currency": "RUB",
+      "supplier": "Европровод",
+      "category": "Кабели",
+      "brand": "Prysmian",
+      "unit": "м",
+      "specifications": {
+        "cores": 3,
+        "section": "2.5мм2",
+        "standard": "NYM"
+      },
+      "updated_at": "2025-09-12T00:00:21.837363",
+      "full_text": "Кабель NYM 3x2.5 Установочный кабель немецкого стандарта Prysmian Кабели Европровод"
+    },
+    "similarity_percentage": 63.22,
+    "similarity_details": {
+      "name": 75.83,
+      "description": 40.47,
+      "category": 100.0,
+      "brand": 12.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 40.6258
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "1",
+      "material_name": "Кабель ВВГ 3x2.5мм²",
+      "description": "",
+      "price": 125.5,
+      "currency": "RUB",
+      "supplier": "ООО Электропром",
+      "category": null,
+      "brand": null,
+      "unit": null,
+      "specifications": {},
+      "updated_at": "2025-09-12T00:52:49.014473",
+      "full_text": "Кабель ВВГ 3x2.5мм²    ООО Электропром"
+    },
+    "similarity_percentage": 48.4,
+    "similarity_details": {
+      "name": 78.91,
+      "description": 0.0,
+      "category": 0.0,
+      "brand": 0.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 39.1943
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "6",
+      "material_name": "Кабель UTP Cat5e 4 пары",
+      "description": "Витая пара для сетей Ethernet",
+      "price": 28.5,
+      "currency": "RUB",
+      "supplier": "КабельСвязь",
+      "category": "Кабели связи",
+      "brand": "Hyperline",
+      "unit": "м",
+      "specifications": {
+        "category": "Cat.5e",
+        "pairs": 4
+      },
+      "updated_at": "2025-09-12T00:00:21.837302",
+      "full_text": "Кабель UTP Cat5e 4 пары Витая пара для сетей Ethernet Hyperline Кабели связи КабельСвязь"
+    },
+    "similarity_percentage": 44.47,
+    "similarity_details": {
+      "name": 41.47,
+      "description": 22.9,
+      "category": 80.0,
+      "brand": 22.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 16.4622
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "915872",
+      "material_name": "Кабель монтажный МКШВнг(А)-FRLS 10*2*0,5",
+      "description": "Кабель монтажный МКШВнг(А)-FRLS 10*2*0,5",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "Белкаб",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "БЕЛКАБ-ВнгFRLS 10*2*0,5 (з)",
+        "Код ЕТМ": "111505"
+      },
+      "updated_at": "2025-09-12T00:37:31.805451",
+      "full_text": "Кабель монтажный МКШВнг(А)-FRLS 10*2*0,5 Кабель монтажный МКШВнг(А)-FRLS 10*2*0,5 Белкаб Общая Не указан"
+    },
+    "similarity_percentage": 43.28,
+    "similarity_details": {
+      "name": 43.95,
+      "description": 37.8,
+      "category": 14.62,
+      "brand": 53.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 14.3624
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "915586",
+      "material_name": "Кабель силовой гибкий КГТП-ХЛ 3х2,5-380/660-3(100м)ТРТС",
+      "description": "Кабель силовой гибкий КГТП-ХЛ 3х2,5-380/660-3(100м)ТРТС",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "ЭлПром",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "БП-00024103",
+        "Код ЕТМ": "11052510"
+      },
+      "updated_at": "2025-09-12T00:37:31.803520",
+      "full_text": "Кабель силовой гибкий КГТП-ХЛ 3х2,5-380/660-3(100м)ТРТС Кабель силовой гибкий КГТП-ХЛ 3х2,5-380/660-3(100м)ТРТС ЭлПром Общая Не указан"
+    },
+    "similarity_percentage": 40.99,
+    "similarity_details": {
+      "name": 46.54,
+      "description": 51.13,
+      "category": 14.62,
+      "brand": 13.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 12.7377
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "912165",
+      "material_name": "Кабель контрольный КВВГЭ нг(А) 5*6 ТРТС",
+      "description": "Кабель контрольный КВВГЭ нг(А) 5*6 ТРТС",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "Металлист",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "У0000001180",
+        "Код ЕТМ": "111010"
+      },
+      "updated_at": "2025-09-12T00:37:31.783079",
+      "full_text": "Кабель контрольный КВВГЭ нг(А) 5*6 ТРТС Кабель контрольный КВВГЭ нг(А) 5*6 ТРТС Металлист Общая Не указан"
+    },
+    "similarity_percentage": 37.75,
+    "similarity_details": {
+      "name": 37.94,
+      "description": 37.13,
+      "category": 14.62,
+      "brand": 33.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 14.3624
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "913819",
+      "material_name": "Кабель DVI 19M на D 19M, феррит.кольца, 1.8м.",
+      "description": "Кабель DVI 19M на D 19M, феррит.кольца, 1.8м.",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "Cablexpert",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "1824230",
+        "Код ЕТМ": "9330901010"
+      },
+      "updated_at": "2025-09-12T00:37:31.793164",
+      "full_text": "Кабель DVI 19M на D 19M, феррит.кольца, 1.8м. Кабель DVI 19M на D 19M, феррит.кольца, 1.8м. Cablexpert Общая Не указан"
+    },
+    "similarity_percentage": 34.77,
+    "similarity_details": {
+      "name": 33.37,
+      "description": 32.16,
+      "category": 14.62,
+      "brand": 32.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 14.3624
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "915286",
+      "material_name": "Кабель КПСЭСнг(А)-FRHF 4х2.5",
+      "description": "Кабель КПСЭСнг(А)-FRHF 4х2.5",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "Спецкабель",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "00000018003",
+        "Код ЕТМ": "909510"
+      },
+      "updated_at": "2025-09-12T00:37:31.801682",
+      "full_text": "Кабель КПСЭСнг(А)-FRHF 4х2.5 Кабель КПСЭСнг(А)-FRHF 4х2.5 Спецкабель Общая Не указан"
+    },
+    "similarity_percentage": 30.16,
+    "similarity_details": {
+      "name": 51.31,
+      "description": 34.77,
+      "category": 14.62,
+      "brand": 84.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 16.4622
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "913060",
+      "material_name": "Кабель силовой АПвКаВ 3х240мк/35-10",
+      "description": "Кабель силовой АПвКаВ 3х240мк/35-10",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "Угличкабель",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "P306710035240",
+        "Код ЕТМ": "11050510"
+      },
+      "updated_at": "2025-09-12T00:37:31.788878",
+      "full_text": "Кабель силовой АПвКаВ 3х240мк/35-10 Кабель силовой АПвКаВ 3х240мк/35-10 Угличкабель Общая Не указан"
+    },
+    "similarity_percentage": 30.11,
+    "similarity_details": {
+      "name": 48.13,
+      "description": 58.72,
+      "category": 14.62,
+      "brand": 60.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 15.6973
+  },
+  {
+    "material": {
+      "id": "1",
+      "name": "Кабель ВВГ 3x2.5",
+      "description": "Кабель силовой медный",
+      "category": "Кабели",
+      "brand": "Севкабель",
+      "model": null,
+      "specifications": {},
+      "unit": null,
+      "created_at": "2025-09-12T00:52:49.014005",
+      "full_text": "Кабель ВВГ 3x2.5 Кабель силовой медный Севкабель  Кабели"
+    },
+    "price_item": {
+      "id": "915875",
+      "material_name": "Кабель силовой ПвКаВ 3х240мк/95-10",
+      "description": "Кабель силовой ПвКаВ 3х240мк/95-10",
+      "price": 0.0,
+      "currency": "RUB",
+      "supplier": "Не указан",
+      "category": "Общая",
+      "brand": "Угличкабель",
+      "unit": "шт",
+      "specifications": {
+        "артикул": "P307710095240",
+        "Код ЕТМ": "11050510"
+      },
+      "updated_at": "2025-09-12T00:37:31.805502",
+      "full_text": "Кабель силовой ПвКаВ 3х240мк/95-10 Кабель силовой ПвКаВ 3х240мк/95-10 Угличкабель Общая Не указан"
+    },
+    "similarity_percentage": 29.87,
+    "similarity_details": {
+      "name": 46.45,
+      "description": 60.03,
+      "category": 14.62,
+      "brand": 60.0,
+      "specifications": 0.0
+    },
+    "elasticsearch_score": 15.6973
+  }
+]

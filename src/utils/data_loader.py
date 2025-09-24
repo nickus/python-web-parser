@@ -17,18 +17,28 @@ class FlexibleJSONMapper:
     
     # Возможные варианты названий полей для материалов
     FIELD_MAPPINGS = {
-        'name': ['name', 'material_name', 'title', 'наименование', 'название'],
+        'name': ['name', 'material_name', 'title', 'наименование', 'наименования', 'название'],
         'description': ['description', 'desc', 'details', 'описание', 'детали'],
         'category': ['category', 'class', 'type', 'категория', 'класс', 'тип'],
-        'brand': ['brand', 'manufacturer', 'бренд', 'производитель'],
+        'brand': ['brand', 'бренд'],
+        'manufacturer': ['manufacturer', 'производитель', 'завод производитель', 'завод изг', 'завод изг.'],
+        'equipment_code': ['equipment_code', 'код обор', 'код обор.', 'код оборудования', 'equipment'],
+        'type_mark': ['type_mark', 'тип марка', 'тип, марка', 'марка', 'тип'],
         'model': ['model', 'модель'],
-        'unit': ['unit', 'measure', 'единица', 'ед_изм'],
-        'id': ['id', 'code', 'article', 'код', 'артикул'],
-        # Для прайс-листов
-        'material_name': ['material_name', 'name', 'title', 'наименование', 'название'],
+        'unit': ['unit', 'measure', 'единица', 'ед_изм', 'ед. изм.'],
+        'quantity': ['quantity', 'qty', 'кол-во', 'количество'],
+        'id': ['id', 'article', 'артикул'],  # Убираем 'code' и 'код' чтобы не конфликтовало с equipment_code
+        # Для прайс-листов (новая структура)
+        'article': ['article', 'артикул'],  # Убираем 'код' чтобы не конфликтовало с equipment_code
+        'brand_code': ['brand_code', 'код_бренда', 'код бренда'],
+        'cli_code': ['cli_code', 'client_code', 'клиентский_код', 'клиентский код'],
+        'material_class': ['class', 'material_class', 'класс', 'класс материала'],
+        'class_code': ['class_code', 'код_класса', 'код класса'],
         'price': ['price', 'cost', 'цена', 'стоимость'],
         'currency': ['currency', 'валюта'],
-        'supplier': ['supplier', 'vendor', 'поставщик', 'продавец']
+        'supplier': ['supplier', 'vendor', 'поставщик', 'продавец'],
+        # Для обратной совместимости
+        'material_name': ['material_name', 'name', 'title', 'наименование', 'название']
     }
     
     @staticmethod
@@ -40,26 +50,58 @@ class FlexibleJSONMapper:
         mapped_data = {}
         available_keys = [k.lower() for k in data.keys()]
         
-        # Проходим по всем возможным полям
+        # ИСПРАВЛЕНИЕ: Сначала ищем все точные совпадения, потом частичные
+        used_keys = set()  # Отслеживаем уже использованные ключи
+
+        # ЭТАП 1: Точные совпадения (высокий приоритет)
         for standard_field, possible_names in FlexibleJSONMapper.FIELD_MAPPINGS.items():
             mapped_value = None
-            
-            # Ищем соответствие среди возможных названий
+            mapped_key = None
+
+            # Ищем только точные совпадения
             for possible_name in possible_names:
-                possible_name_lower = possible_name.lower()
-                
-                # Точное совпадение
+                possible_name_lower = possible_name.lower().strip()
+
                 for original_key in data.keys():
-                    if original_key.lower() == possible_name_lower:
+                    if original_key not in used_keys and original_key.lower().strip() == possible_name_lower:
                         mapped_value = data[original_key]
+                        mapped_key = original_key
                         break
-                        
+
                 if mapped_value is not None:
                     break
-            
-            # Если нашли значение, добавляем его
+
+            # Если нашли точное совпадение, добавляем его
             if mapped_value is not None:
                 mapped_data[standard_field] = mapped_value
+                used_keys.add(mapped_key)
+
+        # ЭТАП 2: Частичные совпадения (низкий приоритет)
+        for standard_field, possible_names in FlexibleJSONMapper.FIELD_MAPPINGS.items():
+            # Пропускаем уже заполненные поля
+            if standard_field in mapped_data:
+                continue
+
+            mapped_value = None
+            mapped_key = None
+
+            # Ищем частичные совпадения среди неиспользованных ключей
+            for possible_name in possible_names:
+                possible_name_lower = possible_name.lower().strip()
+
+                for original_key in data.keys():
+                    if original_key not in used_keys and possible_name_lower in original_key.lower().strip():
+                        mapped_value = data[original_key]
+                        mapped_key = original_key
+                        break
+
+                if mapped_value is not None:
+                    break
+
+            # Если нашли частичное совпадение, добавляем его
+            if mapped_value is not None:
+                mapped_data[standard_field] = mapped_value
+                used_keys.add(mapped_key)
         
         # Добавляем оставшиеся поля как specifications
         specifications = {}
@@ -115,8 +157,25 @@ class MaterialLoader:
             return 'utf-8'
     
     @staticmethod
+    def detect_csv_delimiter(file_path: str, encoding: str) -> str:
+        """Автоопределение разделителя CSV файла"""
+        logger = logging.getLogger(__name__)
+        
+        try:
+            with open(file_path, 'r', encoding=encoding) as csvfile:
+                # Читаем первые несколько строк для определения разделителя
+                sample = csvfile.read(1024)
+                sniffer = csv.Sniffer()
+                delimiter = sniffer.sniff(sample).delimiter
+                logger.info(f"Определен разделитель CSV: '{delimiter}'")
+                return delimiter
+        except Exception as e:
+            logger.warning(f"Не удалось автоопределить разделитель: {e}. Используем ';' по умолчанию")
+            return ';'
+    
+    @staticmethod
     def load_from_csv(file_path: str, encoding: str = None) -> List[Material]:
-        """Загрузка материалов из CSV файла с автоопределением кодировки"""
+        """Загрузка материалов из CSV файла с автоопределением кодировки и разделителя"""
         logger = logging.getLogger(__name__)
         materials = []
         
@@ -126,17 +185,21 @@ class MaterialLoader:
             
         logger.info(f"Загрузка материалов из CSV: {file_path} (кодировка: {encoding})")
         
+        # Определяем разделитель
+        delimiter = MaterialLoader.detect_csv_delimiter(file_path, encoding)
+        
         try:
             with open(file_path, 'r', encoding=encoding, newline='') as csvfile:
-                reader = csv.DictReader(csvfile)
+                reader = csv.DictReader(csvfile, delimiter=delimiter)
         except UnicodeDecodeError as e:
             logger.warning(f"Ошибка кодировки {encoding}, пробуем другие варианты: {e}")
             # Пробуем альтернативные кодировки
             for alt_encoding in ['windows-1251', 'utf-8', 'cp1252']:
                 try:
                     logger.info(f"Попытка загрузки с кодировкой {alt_encoding}")
+                    delimiter = MaterialLoader.detect_csv_delimiter(file_path, alt_encoding)
                     with open(file_path, 'r', encoding=alt_encoding, newline='') as csvfile:
-                        reader = csv.DictReader(csvfile)
+                        reader = csv.DictReader(csvfile, delimiter=delimiter)
                         encoding = alt_encoding
                         break
                 except UnicodeDecodeError:
@@ -145,7 +208,7 @@ class MaterialLoader:
                 raise Exception("Не удалось определить правильную кодировку файла")
         
         with open(file_path, 'r', encoding=encoding, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
+            reader = csv.DictReader(csvfile, delimiter=delimiter)
             
             for row in reader:
                 # Обработка спецификаций если они есть в JSON формате
@@ -247,12 +310,17 @@ class MaterialLoader:
                 material = Material(
                     id=mapped_item.get('id', str(i + 1)),
                     name=str(mapped_item['name']).strip(),
+                    type_mark=str(mapped_item.get('type_mark', '')).strip() if mapped_item.get('type_mark') else None,
+                    equipment_code=str(mapped_item.get('equipment_code', '')).strip() if mapped_item.get('equipment_code') else None,
+                    manufacturer=str(mapped_item.get('manufacturer', '')).strip() if mapped_item.get('manufacturer') else None,
+                    unit=str(mapped_item.get('unit', '')).strip() if mapped_item.get('unit') else None,
+                    quantity=mapped_item.get('quantity') if mapped_item.get('quantity') is not None else None,
+                    # Для обратной совместимости
                     description=str(mapped_item.get('description', '')).strip(),
                     category=str(mapped_item.get('category', '')).strip(),
                     brand=str(mapped_item.get('brand', '')).strip() if mapped_item.get('brand') else None,
                     model=str(mapped_item.get('model', '')).strip() if mapped_item.get('model') else None,
                     specifications=mapped_item.get('specifications', {}),
-                    unit=str(mapped_item.get('unit', '')).strip() if mapped_item.get('unit') else None,
                     created_at=datetime.now()
                 )
                 
@@ -282,8 +350,25 @@ class PriceListLoader:
     """Загрузчик прайс-листов из различных источников"""
     
     @staticmethod
+    def detect_csv_delimiter(file_path: str, encoding: str) -> str:
+        """Автоопределение разделителя CSV файла"""
+        logger = logging.getLogger(__name__)
+        
+        try:
+            with open(file_path, 'r', encoding=encoding) as csvfile:
+                # Читаем первые несколько строк для определения разделителя
+                sample = csvfile.read(1024)
+                sniffer = csv.Sniffer()
+                delimiter = sniffer.sniff(sample).delimiter
+                logger.info(f"Определен разделитель CSV: '{delimiter}'")
+                return delimiter
+        except Exception as e:
+            logger.warning(f"Не удалось автоопределить разделитель: {e}. Используем ';' по умолчанию")
+            return ';'
+    
+    @staticmethod
     def load_from_csv(file_path: str, encoding: str = None) -> List[PriceListItem]:
-        """Загрузка прайс-листа из CSV файла с автоопределением кодировки"""
+        """Загрузка прайс-листа из CSV файла с автоопределением кодировки и разделителя"""
         logger = logging.getLogger(__name__)
         price_items = []
         
@@ -293,17 +378,21 @@ class PriceListLoader:
             
         logger.info(f"Загрузка прайс-листа из CSV: {file_path} (кодировка: {encoding})")
         
+        # Определяем разделитель
+        delimiter = PriceListLoader.detect_csv_delimiter(file_path, encoding)
+        
         try:
             with open(file_path, 'r', encoding=encoding, newline='') as csvfile:
-                reader = csv.DictReader(csvfile)
+                reader = csv.DictReader(csvfile, delimiter=delimiter)
         except UnicodeDecodeError as e:
             logger.warning(f"Ошибка кодировки {encoding}, пробуем другие варианты: {e}")
             # Пробуем альтернативные кодировки
             for alt_encoding in ['windows-1251', 'utf-8', 'cp1252']:
                 try:
                     logger.info(f"Попытка загрузки с кодировкой {alt_encoding}")
+                    delimiter = PriceListLoader.detect_csv_delimiter(file_path, alt_encoding)
                     with open(file_path, 'r', encoding=alt_encoding, newline='') as csvfile:
-                        reader = csv.DictReader(csvfile)
+                        reader = csv.DictReader(csvfile, delimiter=delimiter)
                         encoding = alt_encoding
                         break
                 except UnicodeDecodeError:
@@ -312,7 +401,7 @@ class PriceListLoader:
                 raise Exception("Не удалось определить правильную кодировку файла")
         
         with open(file_path, 'r', encoding=encoding, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
+            reader = csv.DictReader(csvfile, delimiter=delimiter)
             
             for row in reader:
                 # Обработка спецификаций
@@ -323,15 +412,29 @@ class PriceListLoader:
                     except json.JSONDecodeError:
                         specifications = {}
                 
+                # Получаем цену
+                price_value = 0.0
+                try:
+                    price_value = float(row.get('price', 0))
+                except (ValueError, TypeError):
+                    price_value = 0.0
+                
                 price_item = PriceListItem(
                     id=row.get('id', str(uuid.uuid4())),
-                    material_name=row['material_name'],
-                    description=row.get('description', ''),
-                    price=float(row['price']),
-                    currency=row.get('currency', 'RUB'),
-                    supplier=row['supplier'],
-                    category=row.get('category'),
+                    name=row.get('name', row.get('material_name', '')),
                     brand=row.get('brand'),
+                    article=row.get('article'),
+                    brand_code=row.get('brand_code'),
+                    cli_code=row.get('cli_code'),
+                    material_class=row.get('class', row.get('material_class')),
+                    class_code=row.get('class_code'),
+                    price=price_value,
+                    # Для обратной совместимости
+                    material_name=row.get('material_name', row.get('name', '')),
+                    description=row.get('description', ''),
+                    currency=row.get('currency', 'RUB'),
+                    supplier=row.get('supplier', ''),
+                    category=row.get('category'),
                     unit=row.get('unit'),
                     specifications=specifications,
                     updated_at=datetime.now()
@@ -353,18 +456,22 @@ class PriceListLoader:
             price_items = []
             
             # Проверяем наличие обязательных колонок
-            if 'material_name' not in df.columns:
-                # Если нет material_name, ищем name или используем первую текстовую колонку
-                if 'name' in df.columns:
-                    df['material_name'] = df['name']
-                elif len(df.columns) > 0:
-                    # Ищем первую текстовую колонку
-                    for col in df.columns:
-                        if df[col].dtype == 'object':
-                            df['material_name'] = df[col]
-                            break
-                    if 'material_name' not in df.columns:
-                        df['material_name'] = df[df.columns[0]]
+            name_col = None
+            if 'name' in df.columns:
+                name_col = 'name'
+            elif 'material_name' in df.columns:
+                name_col = 'material_name'
+            elif len(df.columns) > 0:
+                # Ищем первую текстовую колонку
+                for col in df.columns:
+                    if df[col].dtype == 'object':
+                        name_col = col
+                        break
+                if not name_col:
+                    name_col = df.columns[0]
+            
+            if not name_col:
+                raise ValueError("Не удалось определить колонку с названием материала")
             
             # Если нет цены, ставим 0
             if 'price' not in df.columns:
@@ -390,20 +497,32 @@ class PriceListLoader:
                 except:
                     price = 0.0
                 
+                # Получаем название материала
+                name_value = str(row.get(name_col, ''))
+                if pd.isna(row.get(name_col)):
+                    name_value = ''
+                
                 price_item = PriceListItem(
                     id=str(row.get('id', idx + 1)),
-                    material_name=str(row.get('material_name', '')),
-                    description=str(row.get('description', row.get('material_name', ''))),
+                    name=name_value,
+                    brand=str(row.get('brand')) if pd.notna(row.get('brand')) else None,
+                    article=str(row.get('article')) if pd.notna(row.get('article')) else None,
+                    brand_code=str(row.get('brand_code')) if pd.notna(row.get('brand_code')) else None,
+                    cli_code=str(row.get('cli_code')) if pd.notna(row.get('cli_code')) else None,
+                    material_class=str(row.get('class', row.get('material_class'))) if pd.notna(row.get('class', row.get('material_class'))) else None,
+                    class_code=str(row.get('class_code')) if pd.notna(row.get('class_code')) else None,
                     price=price,
+                    # Для обратной совместимости
+                    material_name=name_value,
+                    description=str(row.get('description', name_value)),
                     currency=str(row.get('currency', 'RUB')),
                     supplier=str(row.get('supplier', 'Не указан')),
                     category=str(row.get('category', 'Общая')) if pd.notna(row.get('category')) else 'Общая',
-                    brand=str(row.get('brand')) if pd.notna(row.get('brand')) else None,
                     unit=str(row.get('unit', 'шт')) if pd.notna(row.get('unit')) else 'шт',
                     specifications=specifications,
                     updated_at=datetime.now()
                 )
-                if price_item.material_name and price_item.material_name != 'nan':
+                if price_item.name and price_item.name != 'nan':
                     price_items.append(price_item)
             
             return price_items
@@ -432,8 +551,8 @@ class PriceListLoader:
                 mapped_item = FlexibleJSONMapper.auto_map_fields(item)
                 
                 # Проверяем обязательные поля для прайс-листа
-                material_name = mapped_item.get('material_name') or mapped_item.get('name')
-                if not material_name:
+                name_value = mapped_item.get('name') or mapped_item.get('material_name')
+                if not name_value:
                     continue
                     
                 # Обрабатываем цену
@@ -446,13 +565,20 @@ class PriceListLoader:
                 # Создаем объект PriceListItem с обработкой отсутствующих полей
                 price_item = PriceListItem(
                     id=mapped_item.get('id', str(i + 1)),
-                    material_name=str(material_name).strip(),
-                    description=str(mapped_item.get('description', '')).strip(),
+                    name=str(name_value).strip(),
+                    brand=str(mapped_item.get('brand', '')).strip() if mapped_item.get('brand') else None,
+                    article=str(mapped_item.get('article', '')).strip() if mapped_item.get('article') else None,
+                    brand_code=str(mapped_item.get('brand_code', '')).strip() if mapped_item.get('brand_code') else None,
+                    cli_code=str(mapped_item.get('cli_code', '')).strip() if mapped_item.get('cli_code') else None,
+                    material_class=str(mapped_item.get('material_class', '')).strip() if mapped_item.get('material_class') else None,
+                    class_code=str(mapped_item.get('class_code', '')).strip() if mapped_item.get('class_code') else None,
                     price=price_float,
+                    # Для обратной совместимости
+                    material_name=str(name_value).strip(),
+                    description=str(mapped_item.get('description', '')).strip(),
                     currency=str(mapped_item.get('currency', 'RUB')).strip(),
                     supplier=str(mapped_item.get('supplier', '')).strip(),
                     category=str(mapped_item.get('category', '')).strip() if mapped_item.get('category') else None,
-                    brand=str(mapped_item.get('brand', '')).strip() if mapped_item.get('brand') else None,
                     unit=str(mapped_item.get('unit', '')).strip() if mapped_item.get('unit') else None,
                     specifications=mapped_item.get('specifications', {}),
                     updated_at=datetime.now()
@@ -480,6 +606,36 @@ class PriceListLoader:
         return price_items
 
 
+class DataLoader:
+    """Универсальный загрузчик данных - объединяет функционал MaterialLoader и PriceListLoader"""
+    
+    def load_materials(self, file_path: str) -> List[Material]:
+        """Загрузка материалов из файла (автоопределение формата)"""
+        file_path = Path(file_path)
+        
+        if file_path.suffix.lower() == '.csv':
+            return MaterialLoader.load_from_csv(str(file_path))
+        elif file_path.suffix.lower() in ['.xlsx', '.xls']:
+            return MaterialLoader.load_from_excel(str(file_path))
+        elif file_path.suffix.lower() == '.json':
+            return MaterialLoader.load_from_json(str(file_path))
+        else:
+            raise ValueError(f"Неподдерживаемый формат файла: {file_path.suffix}")
+    
+    def load_price_list(self, file_path: str) -> List[PriceListItem]:
+        """Загрузка прайс-листа из файла (автоопределение формата)"""
+        file_path = Path(file_path)
+        
+        if file_path.suffix.lower() == '.csv':
+            return PriceListLoader.load_from_csv(str(file_path))
+        elif file_path.suffix.lower() in ['.xlsx', '.xls']:
+            return PriceListLoader.load_from_excel(str(file_path))
+        elif file_path.suffix.lower() == '.json':
+            return PriceListLoader.load_from_json(str(file_path))
+        else:
+            raise ValueError(f"Неподдерживаемый формат файла: {file_path.suffix}")
+
+
 class DataExporter:
     """Экспортер результатов поиска"""
     
@@ -499,7 +655,7 @@ class DataExporter:
                 'material_category': result['material']['category'],
                 'material_brand': result['material']['brand'] or '',
                 'price_item_id': result['price_item']['id'],
-                'price_item_name': result['price_item']['material_name'],
+                'price_item_name': result['price_item'].get('name', result['price_item'].get('material_name', '')),
                 'price_item_description': result['price_item']['description'],
                 'price': result['price_item']['price'],
                 'currency': result['price_item']['currency'],
@@ -519,28 +675,43 @@ class DataExporter:
         if not results:
             return
         
-        # Подготовка данных для XLSX
+        # Подготовка данных для XLSX под новую структуру
         xlsx_data = []
         for result in results:
+            # Получаем данные материала и прайс-листа
+            material = result['material']
+            price_item = result['price_item']
+            
             row = {
-                'ID материала': result['material']['id'],
-                'Материал': result['material']['name'],
-                'Описание материала': result['material']['description'],
-                'Категория материала': result['material']['category'],
-                'Бренд материала': result['material']['brand'] or '',
-                'Модель материала': result['material'].get('model', '') or '',
-                'Единица измерения материала': result['material'].get('unit', 'шт'),
-                'ID позиции прайса': result['price_item']['id'],
-                'Наименование в прайсе': result['price_item']['material_name'],
-                'Описание в прайсе': result['price_item']['description'],
-                'Цена': result['price_item']['price'],
-                'Валюта': result['price_item']['currency'],
-                'Поставщик': result['price_item']['supplier'],
-                'Категория в прайсе': result['price_item'].get('category', ''),
-                'Бренд в прайсе': result['price_item'].get('brand', '') or '',
-                'Единица измерения в прайсе': result['price_item'].get('unit', 'шт'),
-                'Процент схожести': result['similarity_percentage'],
-                'Elasticsearch Score': result['elasticsearch_score']
+                # Колонки материала (левая часть таблицы)
+                'Наименования': material.get('name', ''),
+                'Код обор.': material.get('equipment_code', ''),
+                'Завод изг.': material.get('manufacturer', ''),
+                
+                # Колонка релевантности
+                'Релевантность': f"{result['similarity_percentage']:.1f}%",
+                
+                # Колонки прайс-листа (правая часть таблицы)
+                'name': price_item.get('name', ''),
+                'article': price_item.get('article', ''),
+                'brand': price_item.get('brand', ''),
+                'id': price_item.get('id', ''),
+                'Цена': price_item.get('price', ''),
+                
+                # Дополнительные поля для совместимости
+                'ID материала': material.get('id', ''),
+                'Описание материала': material.get('description', ''),
+                'Категория материала': material.get('category', ''),
+                'Тип, марка': material.get('type_mark', ''),
+                'Ед. изм. (материал)': material.get('unit', ''),
+                'Кол-во': material.get('quantity', ''),
+                
+                'Описание в прайсе': price_item.get('description', ''),
+                'Код бренда': price_item.get('brand_code', ''),
+                'Класс': price_item.get('material_class', ''),
+                'Код класса': price_item.get('class_code', ''),
+                'Валюта': price_item.get('currency', 'RUB'),
+                'Elasticsearch Score': result.get('elasticsearch_score', 0)
             }
             xlsx_data.append(row)
         
@@ -559,3 +730,77 @@ class DataExporter:
         """Экспорт результатов в JSON файл"""
         with open(file_path, 'w', encoding='utf-8') as jsonfile:
             json.dump(results, jsonfile, ensure_ascii=False, indent=2)
+    
+    @staticmethod
+    def load_from_price_list_directory(directory_path: str = None) -> List[PriceListItem]:
+        """
+        Автоматическая загрузка всех файлов прайс-листов из папки price-list
+        
+        Args:
+            directory_path: Путь к папке с прайс-листами (по умолчанию: price-list)
+            
+        Returns:
+            Список объектов PriceListItem
+        """
+        if directory_path is None:
+            directory_path = Path.cwd() / 'price-list'
+        else:
+            directory_path = Path(directory_path)
+            
+        if not directory_path.exists():
+            logging.warning(f"Папка {directory_path} не найдена")
+            return []
+        
+        data_loader = DataLoader()
+        all_price_items = []
+        supported_extensions = ['.xlsx', '.json', '.csv']
+        
+        for file_path in directory_path.iterdir():
+            if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
+                try:
+                    logging.info(f"Загружаем прайс-лист: {file_path}")
+                    items = data_loader.load_price_list(str(file_path))
+                    all_price_items.extend(items)
+                except Exception as e:
+                    logging.error(f"Ошибка при загрузке {file_path}: {e}")
+                    continue
+        
+        logging.info(f"Загружено {len(all_price_items)} позиций из папки price-list")
+        return all_price_items
+    
+    @staticmethod
+    def load_from_material_directory(directory_path: str = None) -> List[Material]:
+        """
+        Автоматическая загрузка всех файлов материалов из папки material
+        
+        Args:
+            directory_path: Путь к папке с материалами (по умолчанию: material)
+            
+        Returns:
+            Список объектов Material
+        """
+        if directory_path is None:
+            directory_path = Path.cwd() / 'material'
+        else:
+            directory_path = Path(directory_path)
+            
+        if not directory_path.exists():
+            logging.warning(f"Папка {directory_path} не найдена")
+            return []
+        
+        data_loader = DataLoader()
+        all_materials = []
+        supported_extensions = ['.xlsx', '.json', '.csv']
+        
+        for file_path in directory_path.iterdir():
+            if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
+                try:
+                    logging.info(f"Загружаем материалы: {file_path}")
+                    items = data_loader.load_materials(str(file_path))
+                    all_materials.extend(items)
+                except Exception as e:
+                    logging.error(f"Ошибка при загрузке {file_path}: {e}")
+                    continue
+        
+        logging.info(f"Загружено {len(all_materials)} материалов из папки material")
+        return all_materials

@@ -63,6 +63,12 @@ class SmartExcelLoader:
         'id', 'код', 'номер', 'артикул', 'sku', '№', 'number',
         'item_id', 'product_id', 'код товара', 'идентификатор'
     ]
+
+    # ДОБАВЛЕНО: Поддержка equipment_code
+    EQUIPMENT_CODE_COLUMNS = [
+        'код обор', 'код обор.', 'код оборудования', 'equipment_code',
+        'equipment', 'оборудование', 'код оборудования', 'код оборудование'
+    ]
     
     def __init__(self):
         """Инициализация загрузчика"""
@@ -146,6 +152,7 @@ class SmartExcelLoader:
         mapping['brand'] = self._find_column(columns_lower, self.BRAND_COLUMNS)
         mapping['model'] = self._find_column(columns_lower, self.MODEL_COLUMNS)
         mapping['unit'] = self._find_column(columns_lower, self.UNIT_COLUMNS)
+        mapping['equipment_code'] = self._find_column(columns_lower, self.EQUIPMENT_CODE_COLUMNS)  # ДОБАВЛЕНО
         
         # Для прайс-листа ищем дополнительные колонки
         if self.detected_type == 'pricelist':
@@ -223,12 +230,18 @@ class SmartExcelLoader:
             if self.column_mapping.get('model'):
                 model_val = row[self.column_mapping['model']]
                 model = str(model_val).strip() if pd.notna(model_val) and str(model_val) != 'nan' else None
-            
+
             unit = 'шт'
             if self.column_mapping.get('unit'):
                 unit_val = row[self.column_mapping['unit']]
                 unit = str(unit_val).strip() if pd.notna(unit_val) and str(unit_val) != 'nan' else 'шт'
-            
+
+            # ДОБАВЛЕНО: Обработка equipment_code
+            equipment_code = None
+            if self.column_mapping.get('equipment_code'):
+                eq_val = row[self.column_mapping['equipment_code']]
+                equipment_code = str(eq_val).strip() if pd.notna(eq_val) and str(eq_val) != 'nan' else None
+
             # Собираем спецификации из дополнительных колонок
             specifications = {}
             for col in df.columns:
@@ -244,6 +257,7 @@ class SmartExcelLoader:
                 category=category,
                 brand=brand,
                 model=model,
+                equipment_code=equipment_code,  # ДОБАВЛЕНО: equipment_code
                 specifications=specifications,
                 unit=unit,
                 created_at=datetime.now()

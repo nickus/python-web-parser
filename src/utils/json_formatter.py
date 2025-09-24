@@ -23,9 +23,10 @@ class MatchingResultFormatter:
         self.selected_matches = {}
     
     def format_matching_results(
-        self, 
+        self,
         matching_results: Dict[str, List[SearchResult]],
-        materials_order: List[str] = None
+        materials_order: List[str] = None,
+        materials_list: List = None
     ) -> List[Dict[str, Any]]:
         """
         Форматирование результатов сопоставления в структурированный JSON
@@ -48,10 +49,17 @@ class MatchingResultFormatter:
         for material_id in material_ids_to_process:
             search_results = matching_results.get(material_id, [])
             if not search_results:
-                # Если нет результатов для материала
+                # Если нет результатов для материала, ищем его название из списка материалов
+                material_name = "Unknown"
+                if materials_list:
+                    for material in materials_list:
+                        if material.id == material_id:
+                            material_name = material.name or "Unknown"
+                            break
+
                 formatted_results.append({
                     "material_id": material_id,
-                    "material_name": "Unknown",
+                    "material_name": material_name,
                     "matches": []
                 })
                 continue

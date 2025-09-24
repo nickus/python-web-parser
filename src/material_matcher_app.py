@@ -48,12 +48,15 @@ class MaterialMatcherApp:
         """
         self.config = config or self._get_default_config()
         
-        # Инициализация сервисов
+        # ОПТИМИЗАЦИЯ 22: Инициализация оптимизированного сервиса с параметрами производительности
+        es_config = self.config.get('elasticsearch', {})
         self.es_service = ElasticsearchService(
-            host=self.config.get('elasticsearch', {}).get('host', 'localhost'),
-            port=self.config.get('elasticsearch', {}).get('port', 9200),
-            username=self.config.get('elasticsearch', {}).get('username'),
-            password=self.config.get('elasticsearch', {}).get('password')
+            host=es_config.get('host', 'localhost'),
+            port=es_config.get('port', 9200),
+            username=es_config.get('username'),
+            password=es_config.get('password'),
+            bulk_size=es_config.get('bulk_size', 750),
+            max_workers=es_config.get('max_workers', 4)
         )
         
         self.similarity_service = SimilarityService()
@@ -62,11 +65,14 @@ class MaterialMatcherApp:
         logger.info("MaterialMatcher application initialized successfully")
     
     def _get_default_config(self) -> Dict[str, Any]:
-        """Получение конфигурации по умолчанию"""
+        """Получение оптимизированной конфигурации по умолчанию"""
         return {
             'elasticsearch': {
                 'host': 'localhost',
-                'port': 9200
+                'port': 9200,
+                # ОПТИМИЗАЦИЯ 21: Оптимальные настройки bulk операций
+                'bulk_size': 750,  # Увеличено с 500 до 750 для лучшей производительности
+                'max_workers': 4   # 4 потока оптимально для большинства машин
             },
             'matching': {
                 'similarity_threshold': 20.0,
@@ -187,9 +193,36 @@ class MaterialMatcherApp:
             logger.error(f"Error loading price list: {e}")
             return []
     
+    def enable_bypass_mode(self, price_items: List[PriceListItem]) -> bool:
+        """
+        Включает режим работы без Elasticsearch с данными в памяти
+        
+        Args:
+            price_items: Список элементов прайс-листа для работы в памяти
+            
+        Returns:
+            True если режим успешно включен
+        """
+        try:
+            logger.info(f"Enabling bypass mode with {len(price_items)} price list items")
+            
+            # Пересоздаем matching service с данными в памяти
+            self.matching_service = MaterialMatchingService(
+                self.es_service, 
+                self.similarity_service, 
+                price_items
+            )
+            
+            logger.info("Bypass mode enabled successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error enabling bypass mode: {e}")
+            return False
+    
     def index_data(self, materials: List[Material] = None, price_items: List[PriceListItem] = None) -> bool:
         """
-        Индексация данных в Elasticsearch
+        ОПТИМИЗИРОВАННАЯ индексация данных в Elasticsearch с мониторингом производительности
         
         Args:
             materials: Список материалов для индексации
@@ -199,33 +232,98 @@ class MaterialMatcherApp:
             True если индексация прошла успешно
         """
         success = True
+        total_start_time = time.time()
+        
+        # ОПТИМИЗАЦИЯ 23: Предварительная проверка здоровья кластера
+        health = self.es_service.health_check()
+        if not health['connection_healthy']:
+            logger.error(f"Elasticsearch cluster unhealthy: {health.get('error', 'Unknown error')}")
+            return False
+        
+        if health.get('recommendations'):
+            for rec in health['recommendations']:
+                logger.warning(f"Performance recommendation: {rec}")
+        
+        logger.info(f"Starting optimized bulk indexing (bulk_size={self.es_service.bulk_size}, workers={self.es_service.max_workers})")
         
         if materials:
-            logger.info(f"Indexing {len(materials)} materials...")
+            logger.info(f"Bulk indexing {len(materials)} materials...")
+            materials_start = time.time()
             if not self.es_service.index_materials(materials):
                 success = False
+            else:
+                materials_time = time.time() - materials_start
+                logger.info(f"Materials indexing completed in {materials_time:.2f}s")
         
         if price_items:
-            logger.info(f"Indexing {len(price_items)} price list items...")
+            logger.info(f"Bulk indexing {len(price_items)} price list items...")
+            price_start = time.time()
             if not self.es_service.index_price_list(price_items):
                 success = False
+            else:
+                price_time = time.time() - price_start
+                logger.info(f"Price list indexing completed in {price_time:.2f}s")
+        
+        # ОПТИМИЗАЦИЯ 24: Оптимизация индексов после индексации
+        if success and (materials or price_items):
+            logger.info("Optimizing indices for search performance...")
+            optimization_start = time.time()
+            self.es_service.optimize_indices_for_search()
+            optimization_time = time.time() - optimization_start
+            logger.info(f"Index optimization completed in {optimization_time:.2f}s")
+        
+        total_time = time.time() - total_start_time
+        
+        # ОПТИМИЗАЦИЯ 25: Логирование статистики производительности
+        if success:
+            perf_stats = self.es_service.get_performance_stats()
+            index_stats = self.es_service.get_index_stats()
+            
+            logger.info("=== ОПТИМИЗАЦИЯ: Статистика производительности ===")
+            logger.info(f"Total indexing time: {total_time:.2f}s")
+            logger.info(f"Documents indexed: {perf_stats['total_indexed_documents']}")
+            logger.info(f"Average docs/sec: {perf_stats['average_documents_per_second']}")
+            logger.info(f"Average time per doc: {perf_stats['average_time_per_document_ms']}ms")
+            logger.info(f"Bulk operations: {perf_stats['bulk_operations_count']}")
+            
+            for index_name, stats in index_stats.items():
+                if 'document_count' in stats:
+                    logger.info(f"{index_name}: {stats['document_count']} docs, {stats['store_size_mb']}MB, {stats['segments_count']} segments")
         
         return success
     
-    def run_matching(self, materials: List[Material] = None) -> Dict[str, List]:
+    def run_matching(self, materials: List[Material] = None, price_items: List[PriceListItem] = None, 
+                     similarity_threshold: float = None, max_results: int = None, 
+                     progress_callback=None, **kwargs) -> Dict[str, List]:
         """
         Запуск процесса сопоставления материалов с прайс-листом
         
         Args:
             materials: Список материалов для сопоставления (если None, загружаются все из индекса)
+            price_items: Список элементов прайс-листа (не используется в текущей реализации, так как данные загружаются из индекса)
+            similarity_threshold: Порог схожести для фильтрации результатов
+            max_results: Максимальное количество результатов на материал
+            progress_callback: Функция для отслеживания прогресса
+            **kwargs: Дополнительные параметры для совместимости с GUI
             
         Returns:
             Результаты сопоставления
         """
         if materials is None:
             logger.info("Loading all materials from index...")
-            es_materials = self.es_service.get_all_materials()
-            materials = [Material.from_dict(item['_source']) for item in es_materials]
+            try:
+                es_materials = self.es_service.get_all_materials()
+                materials = [Material.from_dict(item['_source']) for item in es_materials]
+                logger.info(f"Loaded {len(materials)} materials from Elasticsearch")
+            except Exception as e:
+                logger.warning(f"Failed to load materials from Elasticsearch: {e}")
+                # В режиме обхода материалы должны быть переданы в метод
+                # Если не переданы, пытаемся получить из matching_service
+                if hasattr(self.matching_service, '_cached_materials'):
+                    materials = self.matching_service._cached_materials
+                    logger.info(f"Using {len(materials)} cached materials from bypass mode")
+                else:
+                    materials = []
         
         if not materials:
             logger.warning("No materials found for matching")
@@ -234,16 +332,19 @@ class MaterialMatcherApp:
         logger.info(f"Starting matching process for {len(materials)} materials...")
         start_time = time.time()
         
-        # Получение параметров из конфигурации
-        similarity_threshold = self.config.get('matching', {}).get('similarity_threshold', 20.0)
-        max_results = self.config.get('matching', {}).get('max_results_per_material', 10)
+        # Получение параметров из конфигурации или переданных аргументов
+        if similarity_threshold is None:
+            similarity_threshold = self.config.get('matching', {}).get('similarity_threshold', 20.0)
+        if max_results is None:
+            max_results = self.config.get('matching', {}).get('max_results_per_material', 10)
         max_workers = self.config.get('matching', {}).get('max_workers', 4)
         
         results = self.matching_service.match_materials_batch(
             materials,
             similarity_threshold=similarity_threshold,
             max_results_per_material=max_results,
-            max_workers=max_workers
+            max_workers=max_workers,
+            progress_callback=progress_callback
         )
         
         end_time = time.time()
@@ -342,18 +443,29 @@ class MaterialMatcherApp:
 
 
 def create_sample_config() -> Dict[str, Any]:
-    """Создание примера конфигурации"""
+    """
+    ОПТИМИЗАЦИЯ 26: Создание оптимизированного примера конфигурации
+    """
     return {
         "elasticsearch": {
             "host": "localhost",
             "port": 9200,
             "username": None,
-            "password": None
+            "password": None,
+            # ПРОИЗВОДИТЕЛЬНОСТЬ: Оптимизированные настройки для bulk операций
+            "bulk_size": 750,      # Увеличенный размер батча для лучшей производительности
+            "max_workers": 4       # 4 потока оптимально для большинства систем
         },
         "matching": {
             "similarity_threshold": 20.0,
             "max_results_per_material": 10,
             "max_workers": 4
+        },
+        # МОНИТОРИНГ: Дополнительные настройки для отслеживания производительности
+        "performance": {
+            "log_detailed_stats": True,        # Подробная статистика производительности
+            "optimize_after_indexing": True,   # Автоматическая оптимизация после индексации
+            "health_check_before_indexing": True  # Проверка здоровья кластера перед индексацией
         }
     }
 

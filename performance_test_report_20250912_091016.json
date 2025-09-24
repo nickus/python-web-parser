@@ -1,0 +1,120 @@
+{
+  "test_suite": "Elasticsearch Performance Optimization",
+  "timestamp": "2025-09-12T09:10:16.709266",
+  "total_duration_s": 0.026,
+  "tests_passed": 3,
+  "tests_failed": 4,
+  "total_tests": 7,
+  "success_rate": 42.9,
+  "elasticsearch_config": {
+    "host": "localhost",
+    "port": 9200,
+    "bulk_size": 1000,
+    "max_workers": 6
+  },
+  "detailed_results": {
+    "connection": {
+      "status": "FAIL",
+      "duration_ms": 0.18,
+      "details": "Connection failed"
+    },
+    "index_creation": {
+      "status": "FAIL",
+      "duration_ms": 0.23,
+      "materials_index": false,
+      "price_list_index": false,
+      "details": "Optimized indices created with Russian analyzer and performance settings"
+    },
+    "bulk_indexing": {
+      "status": "FAIL",
+      "materials": {
+        "count": 100,
+        "duration_s": 0.019,
+        "docs_per_sec": 5315.8,
+        "success": false
+      },
+      "price_list": {
+        "count": 75,
+        "duration_s": 0.003,
+        "docs_per_sec": 27148.8,
+        "success": false
+      }
+    },
+    "search_performance": {
+      "status": "PASS",
+      "queries_tested": 5,
+      "avg_materials_search_ms": 0.1,
+      "avg_cached_search_ms": 0.11,
+      "cache_speedup_factor": 0.9,
+      "detailed_results": [
+        {
+          "query": "кабель",
+          "materials_count": 0,
+          "materials_duration_ms": 0.13,
+          "cached_duration_ms": 0.15,
+          "price_items_count": 0,
+          "price_duration_ms": 0.11
+        },
+        {
+          "query": "автомат",
+          "materials_count": 0,
+          "materials_duration_ms": 0.1,
+          "cached_duration_ms": 0.11,
+          "price_items_count": 0,
+          "price_duration_ms": 0.1
+        },
+        {
+          "query": "лампа led",
+          "materials_count": 0,
+          "materials_duration_ms": 0.09,
+          "cached_duration_ms": 0.09,
+          "price_items_count": 0,
+          "price_duration_ms": 0.1
+        },
+        {
+          "query": "провод пвс",
+          "materials_count": 0,
+          "materials_duration_ms": 0.09,
+          "cached_duration_ms": 0.1,
+          "price_items_count": 0,
+          "price_duration_ms": 0.09
+        },
+        {
+          "query": "розетка заземление",
+          "materials_count": 0,
+          "materials_duration_ms": 0.08,
+          "cached_duration_ms": 0.09,
+          "price_items_count": 0,
+          "price_duration_ms": 0.09
+        }
+      ]
+    },
+    "caching_system": {
+      "status": "PASS",
+      "first_query_ms": 0.1,
+      "cached_query_ms": 0.01,
+      "speedup_factor": 0.1,
+      "cache_hits": 1,
+      "total_queries": 12,
+      "cache_hit_ratio": 8.3
+    },
+    "production_optimization": {
+      "status": "FAIL",
+      "duration_s": 0.0,
+      "optimization_success": false,
+      "cluster_healthy": false,
+      "cluster_status": "unknown",
+      "index_statistics": {}
+    },
+    "monitoring": {
+      "status": "PASS",
+      "performance_stats_complete": true,
+      "search_stats_complete": true,
+      "export_successful": true,
+      "total_indexed_docs": 0,
+      "avg_docs_per_sec": 0,
+      "total_queries": 12,
+      "cache_hit_ratio": 8.333333333333332
+    }
+  }
+}
