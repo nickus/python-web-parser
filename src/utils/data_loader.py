@@ -11,6 +11,13 @@ import logging
 from ..models.material import Material, PriceListItem
 from .excel_loader import SmartExcelLoader
 
+# Импорт оптимизированного загрузчика JSON
+try:
+    from .optimized_json_loader import OptimizedJSONLoader, create_progress_reporter
+    OPTIMIZED_LOADER_AVAILABLE = True
+except ImportError:
+    OPTIMIZED_LOADER_AVAILABLE = False
+
 
 class FlexibleJSONMapper:
     """Класс для гибкого маппинга полей JSON"""
@@ -280,32 +287,59 @@ class MaterialLoader:
             return materials
     
     @staticmethod
-    def load_from_json(file_path: str, encoding: str = 'utf-8') -> List[Material]:
-        """Загрузка материалов из JSON файла с автоматическим маппингом полей"""
+    def load_from_json(file_path: str, encoding: str = 'utf-8', use_optimized: bool = None) -> List[Material]:
+        """Загрузка материалов из JSON файла с автоматическим маппингом полей
+
+        Args:
+            file_path: Путь к JSON файлу
+            encoding: Кодировка файла
+            use_optimized: Использовать оптимизированный загрузчик (автоопределение если None)
+        """
+        # Автоопределение необходимости оптимизированного загрузчика
+        if use_optimized is None:
+            try:
+                file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+                # Используем оптимизированный загрузчик для файлов > 5 МБ
+                use_optimized = file_size_mb > 5
+            except:
+                use_optimized = False
+
+        # Если выбран оптимизированный загрузчик и он доступен
+        if use_optimized:
+            print(f"[INFO] Использование оптимизированного загрузчика JSON")
+            try:
+                optimized_loader = OptimizedJSONLoader()
+                progress_callback = create_progress_reporter(update_interval=10000)
+                return optimized_loader.load_materials_from_json(file_path, encoding, progress_callback)
+            except Exception as e:
+                print(f"[WARNING] Ошибка оптимизированного загрузчика: {e}")
+                print(f"[INFO] Переключение на стандартный загрузчик")
+
+        # Стандартный загрузчик (оригинальный код)
         print(f"[INFO] Начинаю загрузку JSON файла: {file_path}")
         start_time = datetime.now()
-        
+
         with open(file_path, 'r', encoding=encoding) as jsonfile:
             data = json.load(jsonfile)
-        
+
         if not isinstance(data, list):
             print("[ERROR] JSON файл должен содержать массив объектов")
             return []
-        
+
         print(f"[INFO] Загружено {len(data)} записей из JSON")
-        
+
         materials = []
         mapped_count = 0
-        
+
         for i, item in enumerate(data):
             try:
                 # Применяем гибкий маппинг полей
                 mapped_item = FlexibleJSONMapper.auto_map_fields(item)
-                
+
                 # Проверяем обязательные поля
                 if not mapped_item.get('name'):
                     continue
-                    
+
                 # Создаем объект Material с обработкой отсутствующих полей
                 material = Material(
                     id=mapped_item.get('id', str(i + 1)),
@@ -323,26 +357,26 @@ class MaterialLoader:
                     specifications=mapped_item.get('specifications', {}),
                     created_at=datetime.now()
                 )
-                
+
                 materials.append(material)
                 mapped_count += 1
-                
+
                 # Логируем прогресс для больших файлов
                 if len(data) > 1000 and (i + 1) % 10000 == 0:
                     elapsed = (datetime.now() - start_time).total_seconds()
                     print(f"[INFO] Обработано {i + 1}/{len(data)} записей за {elapsed:.2f}сек")
-                    
+
             except Exception as e:
                 print(f"[WARNING] Ошибка обработки записи {i}: {e}")
                 continue
-        
+
         elapsed = (datetime.now() - start_time).total_seconds()
         print(f"[OK] Гибкий JSON маппинг завершен:")
         print(f"      - Успешно загружено {len(materials)} материалов")
         print(f"      - Время загрузки: {elapsed:.2f} секунды")
         if mapped_count < len(data):
             print(f"      - Пропущено записей без обязательных полей: {len(data) - mapped_count}")
-            
+
         return materials
 
 
@@ -528,11 +562,51 @@ class PriceListLoader:
             return price_items
     
     @staticmethod
-    def load_from_json(file_path: str, encoding: str = 'utf-8') -> List[PriceListItem]:
-        """Загрузка прайс-листа из JSON файла с автоматическим маппингом полей"""
+    def load_from_json(file_path: str, encoding: str = 'utf-8', use_optimized: bool = None) -> List[PriceListItem]:
+        """Загрузка прайс-листа из JSON файла с автоматическим маппингом полей
+
+        Args:
+            file_path: Путь к JSON файлу
+            encoding: Кодировка файла
+            use_optimized: Использовать оптимизированный загрузчик (автоопределение если None)
+        """
+        # Автоопределение необходимости оптимизированного загрузчика
+        if use_optimized is None:
+            try:
+                file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+                # Используем оптимизированный загрузчик для файлов > 5 МБ
+                use_optimized = file_size_mb > 5
+            except:
+                use_optimized = False
+
+        # Если выбран оптимизированный загрузчик и он доступен
+        if use_optimized:
+            print(f"[INFO] Использование быстрого загрузчика JSON для прайс-листа")
+            try:
+                # Сначала пробуем быстрый загрузчик
+                from .fast_json_loader import load_json_fast
+
+                def progress_callback(current, total, message=""):
+                    print(f"[INFO] Обработано {current}/{total} записей за {message}")
+
+                return load_json_fast(file_path, progress_callback)
+
+            except ImportError:
+                print(f"[INFO] Быстрый загрузчик недоступен, пробуем оптимизированный")
+                try:
+                    optimized_loader = OptimizedJSONLoader()
+                    progress_callback = create_progress_reporter(update_interval=10000)
+                    return optimized_loader.load_price_list_from_json(file_path, encoding, progress_callback)
+                except Exception as e:
+                    print(f"[WARNING] Ошибка оптимизированного загрузчика: {e}")
+            except Exception as e:
+                print(f"[WARNING] Ошибка быстрого загрузчика: {e}")
+                print(f"[INFO] Переключение на стандартный загрузчик")
+
+        # Стандартный загрузчик (оригинальный код)
         print(f"[INFO] Начинаю загрузку JSON прайс-листа: {file_path}")
         start_time = datetime.now()
-        
+
         with open(file_path, 'r', encoding=encoding) as jsonfile:
             data = json.load(jsonfile)
         

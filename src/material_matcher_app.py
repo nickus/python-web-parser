@@ -181,7 +181,10 @@ class MaterialMatcherApp:
             elif file_format == 'excel':
                 price_items = PriceListLoader.load_from_excel(str(path))
             elif file_format == 'json':
-                price_items = PriceListLoader.load_from_json(str(path))
+                # Принудительно включаем оптимизацию для больших JSON файлов
+                file_size_mb = path.stat().st_size / (1024 * 1024)
+                use_optimized = file_size_mb > 5  # Файлы больше 5MB
+                price_items = PriceListLoader.load_from_json(str(path), use_optimized=use_optimized)
             else:
                 logger.error(f"Unsupported format: {file_format}")
                 return []

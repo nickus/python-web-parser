@@ -184,8 +184,19 @@ class MaterialMatcherGUI:
         self.pricelist_path_var = tk.StringVar()
         ttk.Button(pricelist_row, text="📄 Выбрать прайс-листы (можно несколько)",
                   command=self.load_pricelist_file, width=35).pack(side=tk.LEFT, padx=5)
-        
-        self.pricelist_info_label = ttk.Label(pricelist_row, text="Прайс-лист не загружен", 
+
+        # Индикатор прогресса загрузки прайс-листа
+        self.pricelist_progress = ttk.Progressbar(pricelist_row, mode='determinate',
+                                                 length=100, style="TProgressbar")
+        self.pricelist_progress.pack(side=tk.LEFT, padx=(5,0))
+        self.pricelist_progress.pack_forget()  # Скрываем по умолчанию
+
+        # Лейбл для процентов прогресса
+        self.pricelist_progress_label = ttk.Label(pricelist_row, text="",
+                                                 font=('Arial', 8))
+        self.pricelist_progress_label.pack(side=tk.LEFT, padx=(5,0))
+
+        self.pricelist_info_label = ttk.Label(pricelist_row, text="Прайс-лист не загружен",
                                              foreground="red")
         self.pricelist_info_label.pack(side=tk.LEFT, padx=(10,0))
         
@@ -209,12 +220,23 @@ class MaterialMatcherGUI:
         # Кнопки управления сопоставлением
         control_frame = ttk.Frame(tab)
         control_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        self.start_button = ttk.Button(control_frame, text="[START] Запустить сопоставление", 
+
+        self.start_button = ttk.Button(control_frame, text="[START] Запустить сопоставление",
                                       command=self.run_full_matching, state="disabled")
         self.start_button.pack(side=tk.LEFT, padx=5)
-        
-        self.stop_button = ttk.Button(control_frame, text="[STOP] Остановить", 
+
+        # Селектор количества вариантов
+        variants_frame = ttk.Frame(control_frame)
+        variants_frame.pack(side=tk.LEFT, padx=(10, 5))
+
+        ttk.Label(variants_frame, text="Вариантов:").pack(side=tk.LEFT, padx=(0, 2))
+        self.variants_count_var = tk.IntVar(value=self.config['matching']['max_results_per_material'])
+        self.variants_spinbox = ttk.Spinbox(variants_frame, from_=1, to=10, width=5,
+                                          textvariable=self.variants_count_var,
+                                          command=self.update_variants_count)
+        self.variants_spinbox.pack(side=tk.LEFT)
+
+        self.stop_button = ttk.Button(control_frame, text="[STOP] Остановить",
                                      command=self.stop_matching, state="disabled")
         self.stop_button.pack(side=tk.LEFT, padx=5)
         
@@ -594,6 +616,8 @@ class MaterialMatcherGUI:
             if self.app is None:
                 self.app = MaterialMatcherApp(self.config)
 
+            # Показываем прогресс-бар
+            self.root.after(0, self.show_pricelist_progress)
             self.root.after(0, lambda: self.status_var.set("Загрузка прайс-листов..."))
 
             all_price_items = []
@@ -602,6 +626,10 @@ class MaterialMatcherGUI:
 
             for i, file_path in enumerate(self.selected_pricelist_files, 1):
                 try:
+                    # Обновляем прогресс
+                    self.root.after(0, lambda curr=i, total=total_files, f=file_path:
+                        self.update_pricelist_progress(curr-1, total, f"Загрузка файла {curr}/{total}..."))
+
                     self.root.after(0, lambda f=file_path, curr=i, total=total_files:
                         self.status_var.set(f"Загрузка файла {curr}/{total}: {os.path.basename(f)}..."))
 
@@ -636,6 +664,10 @@ class MaterialMatcherGUI:
 
                 # Обновляем информацию в интерфейсе
                 def update_ui():
+                    # Завершаем прогресс и скрываем индикатор
+                    self.update_pricelist_progress(total_files, total_files, "Загрузка завершена")
+                    self.root.after(1000, self.hide_pricelist_progress)  # Скрываем через 1 сек
+
                     total_items = len(final_items)
                     files_info = f"{len(loaded_files)} файлов: {', '.join(loaded_files)}"
                     self.update_pricelist_info(total_items)
@@ -651,10 +683,12 @@ class MaterialMatcherGUI:
                     f"[SUCCESS] Загружены прайс-листы: {len(final_items)} уникальных позиций из {len(loaded_files)} файлов"))
 
             else:
+                self.root.after(0, self.hide_pricelist_progress)  # Скрываем прогресс при ошибке
                 self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить данные ни из одного файла"))
                 self.root.after(0, lambda: self.status_var.set("Ошибка"))
 
         except Exception as e:
+            self.root.after(0, self.hide_pricelist_progress)  # Скрываем прогресс при исключении
             self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Ошибка загрузки прайс-листов: {e}"))
             self.root.after(0, lambda: self.status_var.set("Ошибка"))
 
@@ -844,8 +878,8 @@ class MaterialMatcherGUI:
                     self.root.after(0, lambda: self.update_materials_info(len(materials)))
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     self.root.after(0, self.update_start_button_state)
-                    # Обновляем предпросмотр с небольшой задержкой для улучшения восприятия скорости
-                    self.root.after(100, lambda: self.update_materials_preview(materials))
+                    # Обновляем информацию о материалах с небольшой задержкой
+                    self.root.after(100, lambda: self.log_message(f"[INFO] Загружено {len(materials)} материалов"))
                 else:
                     self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить материалы"))
                     self.root.after(0, lambda: self.status_var.set("Ошибка"))
@@ -977,9 +1011,33 @@ class MaterialMatcherGUI:
     def update_pricelist_info(self, count):
         """Обновление информации о прайс-листе"""
         self.pricelist_info_label.config(text=f"Загружено {count} позиций", foreground="green")
+
+    def show_pricelist_progress(self):
+        """Показать индикатор прогресса загрузки прайс-листа"""
+        self.pricelist_progress.pack(side=tk.LEFT, padx=(5,0))
+        self.pricelist_progress['value'] = 0
+        self.pricelist_progress_label.config(text="0%")
+
+    def update_pricelist_progress(self, current, total, message=""):
+        """Обновить прогресс загрузки прайс-листа"""
+        if total > 0:
+            percentage = (current / total) * 100
+            self.pricelist_progress['value'] = percentage
+            self.pricelist_progress_label.config(text=f"{percentage:.0f}%")
+            if message:
+                self.pricelist_info_label.config(text=message, foreground="blue")
+
+    def hide_pricelist_progress(self):
+        """Скрыть индикатор прогресса загрузки прайс-листа"""
+        self.pricelist_progress.pack_forget()
+        self.pricelist_progress_label.config(text="")
     
-    
-    
+    def update_variants_count(self):
+        """Обновление количества вариантов для сопоставления"""
+        new_count = self.variants_count_var.get()
+        self.max_results_var.set(new_count)
+        self.log_message(f"[CONFIG] Количество вариантов изменено на: {new_count}")
+
     def update_start_button_state(self):
         """Обновление состояния кнопки запуска"""
         self.log_message(f"[DEBUG] Проверка кнопки: materials={len(self.materials) if self.materials else 0}, price_items={len(self.price_items) if self.price_items else 0}, app={self.app is not None}")
@@ -1098,7 +1156,7 @@ class MaterialMatcherGUI:
         
         # Обновляем конфигурацию
         self.config['matching']['similarity_threshold'] = self.threshold_var.get()
-        self.config['matching']['max_results_per_material'] = self.max_results_var.get()
+        self.config['matching']['max_results_per_material'] = self.variants_count_var.get()
         self.config['matching']['max_workers'] = self.workers_var.get()
         
         self.matching_cancelled = False
