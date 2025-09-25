@@ -76,7 +76,7 @@ class MaterialMatcherApp:
             },
             'matching': {
                 'similarity_threshold': 20.0,
-                'max_results_per_material': 10,
+                'max_results_per_material': 4,
                 'max_workers': 4
             }
         }
@@ -336,7 +336,7 @@ class MaterialMatcherApp:
         if similarity_threshold is None:
             similarity_threshold = self.config.get('matching', {}).get('similarity_threshold', 20.0)
         if max_results is None:
-            max_results = self.config.get('matching', {}).get('max_results_per_material', 10)
+            max_results = self.config.get('matching', {}).get('max_results_per_material', 4)
         max_workers = self.config.get('matching', {}).get('max_workers', 4)
         
         results = self.matching_service.match_materials_batch(
@@ -458,7 +458,7 @@ def create_sample_config() -> Dict[str, Any]:
         },
         "matching": {
             "similarity_threshold": 20.0,
-            "max_results_per_material": 10,
+            "max_results_per_material": 4,
             "max_workers": 4
         },
         # МОНИТОРИНГ: Дополнительные настройки для отслеживания производительности

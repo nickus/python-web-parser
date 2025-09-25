@@ -272,7 +272,7 @@ def load_config(config_path: str = None):
         },
         "matching": {
             "similarity_threshold": 20.0,
-            "max_results_per_material": 10,
+            "max_results_per_material": 4,
             "max_workers": 4
         }
     }

@@ -35,8 +35,13 @@ class SmartExcelLoader:
     ]
     
     BRAND_COLUMNS = [
-        'бренд', 'brand', 'производитель', 'изготовитель', 'manufacturer',
-        'vendor', 'марка', 'фирма', 'поставщик производителя'
+        'бренд', 'brand', 'марка', 'фирма'
+    ]
+
+    MANUFACTURER_COLUMNS = [
+        'производитель', 'изготовитель', 'manufacturer', 'vendor',
+        'завод изг', 'завод изг.', 'завод изготовитель', 'завод производитель',
+        'поставщик производителя', 'завод-изготовитель'
     ]
     
     MODEL_COLUMNS = [
@@ -150,6 +155,7 @@ class SmartExcelLoader:
         mapping['description'] = self._find_column(columns_lower, self.DESCRIPTION_COLUMNS)
         mapping['category'] = self._find_column(columns_lower, self.CATEGORY_COLUMNS)
         mapping['brand'] = self._find_column(columns_lower, self.BRAND_COLUMNS)
+        mapping['manufacturer'] = self._find_column(columns_lower, self.MANUFACTURER_COLUMNS)  # ДОБАВЛЕНО
         mapping['model'] = self._find_column(columns_lower, self.MODEL_COLUMNS)
         mapping['unit'] = self._find_column(columns_lower, self.UNIT_COLUMNS)
         mapping['equipment_code'] = self._find_column(columns_lower, self.EQUIPMENT_CODE_COLUMNS)  # ДОБАВЛЕНО
@@ -242,6 +248,12 @@ class SmartExcelLoader:
                 eq_val = row[self.column_mapping['equipment_code']]
                 equipment_code = str(eq_val).strip() if pd.notna(eq_val) and str(eq_val) != 'nan' else None
 
+            # ДОБАВЛЕНО: Обработка manufacturer
+            manufacturer = None
+            if self.column_mapping.get('manufacturer'):
+                manuf_val = row[self.column_mapping['manufacturer']]
+                manufacturer = str(manuf_val).strip() if pd.notna(manuf_val) and str(manuf_val) != 'nan' else None
+
             # Собираем спецификации из дополнительных колонок
             specifications = {}
             for col in df.columns:
@@ -256,6 +268,7 @@ class SmartExcelLoader:
                 description=description,
                 category=category,
                 brand=brand,
+                manufacturer=manufacturer,  # ДОБАВЛЕНО: manufacturer
                 model=model,
                 equipment_code=equipment_code,  # ДОБАВЛЕНО: equipment_code
                 specifications=specifications,

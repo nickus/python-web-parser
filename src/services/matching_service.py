@@ -213,7 +213,7 @@ class MaterialMatchingService:
     def match_materials_batch(self,
                               materials: List[Material],
                               similarity_threshold: float = 10.0,
-                              max_results_per_material: int = 10,
+                              max_results_per_material: int = 4,
                               max_workers: int = 4,
                               progress_callback=None) -> Dict[str, List[SearchResult]]:
         """

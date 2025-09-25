@@ -9,7 +9,7 @@
     },
     "matching": {
         "similarity_threshold": 10.0,
-        "max_results_per_material": 15,
+        "max_results_per_material": 4,
         "max_workers": 6
     },
     "performance": {

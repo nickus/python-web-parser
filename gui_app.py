@@ -47,6 +47,7 @@ class MaterialMatcherGUI:
         self.price_items = []
         self.results = {}
         self.selected_variants = {}  # Выбранные варианты для каждого материала {material_id: selected_match}
+        self.selected_pricelist_files = []  # Список выбранных файлов прайс-листов
         
         # Используется только древовидный режим просмотра результатов
         self.view_mode = "tree"  # Добавляем недостающий атрибут
@@ -78,7 +79,7 @@ class MaterialMatcherGUI:
             },
             "matching": {
                 "similarity_threshold": 20.0,
-                "max_results_per_material": 10,
+                "max_results_per_material": 4,
                 "max_workers": 4
             }
         }
@@ -166,8 +167,8 @@ class MaterialMatcherGUI:
         materials_row.pack(fill=tk.X)
         
         self.materials_path_var = tk.StringVar()
-        ttk.Button(materials_row, text="📁 Выбрать и загрузить материалы", 
-                  command=self.load_materials_auto, width=30).pack(side=tk.LEFT, padx=5)
+        ttk.Button(materials_row, text="📁 Выбрать и загрузить материалы",
+                  command=self.load_materials_file, width=30).pack(side=tk.LEFT, padx=5)
         
         self.materials_info_label = ttk.Label(materials_row, text="Материалы не загружены", 
                                              foreground="red")
@@ -181,8 +182,8 @@ class MaterialMatcherGUI:
         pricelist_row.pack(fill=tk.X)
         
         self.pricelist_path_var = tk.StringVar()
-        ttk.Button(pricelist_row, text="📄 Выбрать и загрузить прайс-лист", 
-                  command=self.load_pricelist_auto, width=30).pack(side=tk.LEFT, padx=5)
+        ttk.Button(pricelist_row, text="📄 Выбрать прайс-листы (можно несколько)",
+                  command=self.load_pricelist_file, width=35).pack(side=tk.LEFT, padx=5)
         
         self.pricelist_info_label = ttk.Label(pricelist_row, text="Прайс-лист не загружен", 
                                              foreground="red")
@@ -481,7 +482,9 @@ class MaterialMatcherGUI:
     def load_materials_file(self):
         """Выбор файла материалов"""
         filename = filedialog.askopenfilename(
+            parent=self.root,
             title="Выберите файл материалов",
+            initialdir=os.getcwd(),
             filetypes=[
                 ("Все поддерживаемые", "*.csv;*.xlsx;*.json"),
                 ("CSV файлы", "*.csv"),
@@ -491,7 +494,25 @@ class MaterialMatcherGUI:
             ]
         )
         if filename:
+            # Сбрасываем предыдущие данные
+            self.materials = []
+            self.materials_order = []
+            self.results = {}
+            self.selected_variants = {}
+
+            # Очищаем результаты в интерфейсе
+            if hasattr(self, 'results_tree') and self.results_tree:
+                for item in self.results_tree.get_children():
+                    self.results_tree.delete(item)
+
+            # Сбрасываем статус материалов (но оставляем прайс-лист как есть)
+            self.materials_info_label.config(text="Материалы не загружены", foreground="red")
+
             self.materials_path_var.set(filename)
+            self.log_message(f"[INFO] Сброшены предыдущие данные, выбран новый файл: {os.path.basename(filename)}")
+
+            # Запускаем загрузку выбранного файла
+            threading.Thread(target=self.load_materials_data, daemon=True).start()
     
     def load_materials_auto(self):
         """Автоматическая загрузка всех файлов материалов из папки material"""
@@ -524,9 +545,11 @@ class MaterialMatcherGUI:
         self.load_materials_from_directory(materials_dir)  # Загружаем из всей папки
     
     def load_pricelist_file(self):
-        """Выбор файла прайс-листа"""
-        filename = filedialog.askopenfilename(
-            title="Выберите файл прайс-листа",
+        """Выбор файлов прайс-листа (поддержка множественного выбора)"""
+        filenames = filedialog.askopenfilenames(
+            parent=self.root,
+            title="Выберите файлы прайс-листа (можно выбрать несколько)",
+            initialdir=os.getcwd(),
             filetypes=[
                 ("Все поддерживаемые", "*.csv;*.xlsx;*.json"),
                 ("CSV файлы", "*.csv"),
@@ -535,9 +558,106 @@ class MaterialMatcherGUI:
                 ("Все файлы", "*.*")
             ]
         )
-        if filename:
-            self.pricelist_path_var.set(filename)
-    
+        if filenames:
+            # Сбрасываем предыдущие данные прайс-листа
+            self.price_items = []
+            self.results = {}
+            self.selected_variants = {}
+
+            # Очищаем результаты в интерфейсе
+            if hasattr(self, 'results_tree') and self.results_tree:
+                for item in self.results_tree.get_children():
+                    self.results_tree.delete(item)
+
+            # Сбрасываем статус прайс-листа
+            self.pricelist_info_label.config(text="Прайс-лист не загружен", foreground="red")
+
+            # Сохраняем все выбранные файлы (для совместимости используем первый файл в pricelist_path_var)
+            self.pricelist_path_var.set(filenames[0])
+            self.selected_pricelist_files = list(filenames)  # Сохраняем все файлы
+
+            file_count = len(filenames)
+            file_names = ", ".join([os.path.basename(f) for f in filenames])
+            self.log_message(f"[INFO] Сброшены предыдущие данные, выбрано файлов прайс-листа: {file_count}")
+            self.log_message(f"[INFO] Файлы: {file_names}")
+
+            # Запускаем загрузку всех выбранных файлов
+            threading.Thread(target=self.load_multiple_pricelist_files, daemon=True).start()
+
+    def load_multiple_pricelist_files(self):
+        """Загрузка нескольких файлов прайс-листа"""
+        if not hasattr(self, 'selected_pricelist_files') or not self.selected_pricelist_files:
+            self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не выбраны файлы прайс-листа"))
+            return
+
+        try:
+            if self.app is None:
+                self.app = MaterialMatcherApp(self.config)
+
+            self.root.after(0, lambda: self.status_var.set("Загрузка прайс-листов..."))
+
+            all_price_items = []
+            loaded_files = []
+            total_files = len(self.selected_pricelist_files)
+
+            for i, file_path in enumerate(self.selected_pricelist_files, 1):
+                try:
+                    self.root.after(0, lambda f=file_path, curr=i, total=total_files:
+                        self.status_var.set(f"Загрузка файла {curr}/{total}: {os.path.basename(f)}..."))
+
+                    self.root.after(0, lambda f=file_path:
+                        self.log_message(f"[INFO] Загрузка прайс-листа: {os.path.basename(f)}"))
+
+                    # Загружаем прайс-лист из файла
+                    price_items = self.app.load_price_list(file_path)
+
+                    if price_items:
+                        all_price_items.extend(price_items)
+                        loaded_files.append(os.path.basename(file_path))
+                        self.root.after(0, lambda f=file_path, count=len(price_items):
+                            self.log_message(f"[SUCCESS] Загружено {count} позиций из {os.path.basename(f)}"))
+                    else:
+                        self.root.after(0, lambda f=file_path:
+                            self.log_message(f"[WARNING] Не удалось загрузить данные из {os.path.basename(f)}"))
+
+                except Exception as e:
+                    self.root.after(0, lambda f=file_path, err=str(e):
+                        self.log_message(f"[ERROR] Ошибка загрузки {os.path.basename(f)}: {err}"))
+                    continue
+
+            if all_price_items:
+                # Убираем дубликаты по ID (если есть)
+                unique_items = {}
+                for item in all_price_items:
+                    unique_items[item.id] = item
+                final_items = list(unique_items.values())
+
+                self.price_items = final_items
+
+                # Обновляем информацию в интерфейсе
+                def update_ui():
+                    total_items = len(final_items)
+                    files_info = f"{len(loaded_files)} файлов: {', '.join(loaded_files)}"
+                    self.update_pricelist_info(total_items)
+                    self.pricelist_info_label.config(
+                        text=f"Загружено {total_items} позиций из {files_info}",
+                        foreground="green"
+                    )
+                    self.status_var.set("Готов")
+                    self.update_start_button_state()
+
+                self.root.after(0, update_ui)
+                self.root.after(0, lambda: self.log_message(
+                    f"[SUCCESS] Загружены прайс-листы: {len(final_items)} уникальных позиций из {len(loaded_files)} файлов"))
+
+            else:
+                self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить данные ни из одного файла"))
+                self.root.after(0, lambda: self.status_var.set("Ошибка"))
+
+        except Exception as e:
+            self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Ошибка загрузки прайс-листов: {e}"))
+            self.root.after(0, lambda: self.status_var.set("Ошибка"))
+
     def load_pricelist_auto(self):
         """Автоматическая загрузка всех файлов прайс-листов из папки price-list"""
         pricelist_dir = os.path.join(os.getcwd(), "price-list")
@@ -951,7 +1071,8 @@ class MaterialMatcherGUI:
         self.price_items = []
         self.results = {}
         self.selected_variants = {}
-        
+        self.selected_pricelist_files = []
+
         # Очищаем интерфейс
         self.materials_path_var.set("")
         self.pricelist_path_var.set("")
@@ -1146,15 +1267,8 @@ class MaterialMatcherGUI:
                 if material_data:
                     material_code = material_data.equipment_code or ""
                     material_manufacturer = material_data.manufacturer or ""
-                    
-                    # Если данные материала пустые, используем данные из лучшего match
-                    if not material_code and matches:
-                        best_match = matches[0]  # Лучший match - первый в списке
-                        material_code = best_match.get("article", "") or ""
-                    
-                    if not material_manufacturer and matches:
-                        best_match = matches[0]  # Лучший match - первый в списке  
-                        material_manufacturer = best_match.get("brand", "") or ""
+
+                    # Код оборудования и изготовитель берутся только из файла материалов, без резервной логики
                 
                 # Если все еще пустые, ставим прочерк
                 material_code = material_code or "-"
