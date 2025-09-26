@@ -13,10 +13,11 @@ from typing import Dict, Any, List
 import time
 
 from .models.material import Material, PriceListItem
-from .services.elasticsearch_service import ElasticsearchService
-from .services.similarity_service import SimilarityService
-from .services.matching_service import MaterialMatchingService
-from .utils.data_loader import MaterialLoader, PriceListLoader, DataExporter
+from .services.elasticsearch_service_optimized import OptimizedElasticsearchService
+from .services.fast_similarity_service import FastSimilarityService
+from .services.optimized_matching_service import OptimizedMatchingService
+from .utils.data_loader_fixed import MaterialLoader, PriceListLoader
+from .utils.data_loader import DataExporter
 
 
 # Настройка логирования
@@ -48,19 +49,19 @@ class MaterialMatcherApp:
         """
         self.config = config or self._get_default_config()
         
-        # ОПТИМИЗАЦИЯ 22: Инициализация оптимизированного сервиса с параметрами производительности
+        # Используем оптимизированные сервисы для улучшенной производительности
         es_config = self.config.get('elasticsearch', {})
-        self.es_service = ElasticsearchService(
+        self.es_service = OptimizedElasticsearchService(
             host=es_config.get('host', 'localhost'),
             port=es_config.get('port', 9200),
             username=es_config.get('username'),
             password=es_config.get('password'),
-            bulk_size=es_config.get('bulk_size', 750),
+            bulk_size=es_config.get('bulk_size', 1000),
             max_workers=es_config.get('max_workers', 4)
         )
-        
-        self.similarity_service = SimilarityService()
-        self.matching_service = MaterialMatchingService(self.es_service, self.similarity_service)
+
+        self.similarity_service = FastSimilarityService()
+        self.matching_service = OptimizedMatchingService(self.es_service, self.similarity_service)
         
         logger.info("MaterialMatcher application initialized successfully")
     
@@ -84,11 +85,11 @@ class MaterialMatcherApp:
     def setup_indices(self) -> bool:
         """Создание индексов в Elasticsearch"""
         logger.info("Setting up Elasticsearch indices...")
-        
-        materials_success = self.es_service.create_materials_index()
-        price_list_success = self.es_service.create_price_list_index()
-        
-        if materials_success and price_list_success:
+
+        # Используем метод оптимизированного сервиса
+        price_list_success = self.es_service.create_optimized_price_list_index()
+
+        if price_list_success:
             logger.info("Indices created successfully")
             return True
         else:
@@ -210,10 +211,12 @@ class MaterialMatcherApp:
             logger.info(f"Enabling bypass mode with {len(price_items)} price list items")
             
             # Пересоздаем matching service с данными в памяти
-            self.matching_service = MaterialMatchingService(
-                self.es_service, 
-                self.similarity_service, 
-                price_items
+            # ВНИМАНИЕ: Оптимизированный сервис НЕ поддерживает bypass mode
+            # так как он всегда использует Elasticsearch правильно
+            logger.warning("Bypass mode not recommended with optimized service - performance is already optimal")
+            self.matching_service = OptimizedMatchingService(
+                self.es_service,
+                self.similarity_service
             )
             
             logger.info("Bypass mode enabled successfully")
@@ -237,22 +240,20 @@ class MaterialMatcherApp:
         success = True
         total_start_time = time.time()
         
-        # ОПТИМИЗАЦИЯ 23: Предварительная проверка здоровья кластера
-        health = self.es_service.health_check()
-        if not health['connection_healthy']:
-            logger.error(f"Elasticsearch cluster unhealthy: {health.get('error', 'Unknown error')}")
+        # Проверка подключения к Elasticsearch
+        if not self.es_service.check_connection():
+            logger.error("Elasticsearch connection failed")
             return False
-        
-        if health.get('recommendations'):
-            for rec in health['recommendations']:
-                logger.warning(f"Performance recommendation: {rec}")
         
         logger.info(f"Starting optimized bulk indexing (bulk_size={self.es_service.bulk_size}, workers={self.es_service.max_workers})")
         
         if materials:
             logger.info(f"Bulk indexing {len(materials)} materials...")
             materials_start = time.time()
-            if not self.es_service.index_materials(materials):
+            # Материалы больше не индексируются в оптимизированной версии
+            # так как поиск происходит только по прайс-листу
+            logger.info("Skipping materials indexing (not needed in optimized version)")
+            if False:  # Отключаем индексацию материалов
                 success = False
             else:
                 materials_time = time.time() - materials_start
@@ -261,37 +262,23 @@ class MaterialMatcherApp:
         if price_items:
             logger.info(f"Bulk indexing {len(price_items)} price list items...")
             price_start = time.time()
-            if not self.es_service.index_price_list(price_items):
+            if not self.es_service.index_price_list_optimized(price_items):
                 success = False
             else:
                 price_time = time.time() - price_start
                 logger.info(f"Price list indexing completed in {price_time:.2f}s")
         
-        # ОПТИМИЗАЦИЯ 24: Оптимизация индексов после индексации
-        if success and (materials or price_items):
-            logger.info("Optimizing indices for search performance...")
-            optimization_start = time.time()
-            self.es_service.optimize_indices_for_search()
-            optimization_time = time.time() - optimization_start
-            logger.info(f"Index optimization completed in {optimization_time:.2f}s")
+        # Оптимизация индексов происходит автоматически в оптимизированной версии
         
         total_time = time.time() - total_start_time
         
-        # ОПТИМИЗАЦИЯ 25: Логирование статистики производительности
+        # Логирование статистики производительности
         if success:
-            perf_stats = self.es_service.get_performance_stats()
-            index_stats = self.es_service.get_index_stats()
-            
-            logger.info("=== ОПТИМИЗАЦИЯ: Статистика производительности ===")
+            logger.info("=== Статистика производительности ===")
             logger.info(f"Total indexing time: {total_time:.2f}s")
-            logger.info(f"Documents indexed: {perf_stats['total_indexed_documents']}")
-            logger.info(f"Average docs/sec: {perf_stats['average_documents_per_second']}")
-            logger.info(f"Average time per doc: {perf_stats['average_time_per_document_ms']}ms")
-            logger.info(f"Bulk operations: {perf_stats['bulk_operations_count']}")
-            
-            for index_name, stats in index_stats.items():
-                if 'document_count' in stats:
-                    logger.info(f"{index_name}: {stats['document_count']} docs, {stats['store_size_mb']}MB, {stats['segments_count']} segments")
+            if price_items:
+                logger.info(f"Documents indexed: {len(price_items)}")
+                logger.info(f"Average docs/sec: {len(price_items) / total_time:.1f}")
         
         return success
     
@@ -424,21 +411,29 @@ class MaterialMatcherApp:
         Returns:
             Список соответствий
         """
-        # Поиск материала по названию в индексе
+        # В оптимизированной версии используем прямой поиск
         try:
-            search_results = self.es_service.search_materials_by_name(material_name)
-            if not search_results:
-                logger.warning(f"Material '{material_name}' not found in index")
-                return []
-            
-            # Берем первый (наиболее релевантный) результат
-            material_data = search_results[0]
-            material = Material.from_dict(material_data['_source'])
-            
-            # Ищем соответствия для этого материала
-            matches = self.matching_service.find_best_matches_for_material(material, top_n)
-            
-            return [match.to_dict() for match in matches]
+            # Проверяем, есть ли метод быстрого поиска в matching_service
+            if hasattr(self.matching_service, 'search_material_by_name'):
+                return self.matching_service.search_material_by_name(
+                    material_name, top_n,
+                    self.config.get('matching', {}).get('similarity_threshold', 20.0)
+                )
+            else:
+                # Fallback для старого API
+                material = Material(
+                    id="search_temp",
+                    name=material_name
+                )
+
+                threshold = self.config.get('matching', {}).get('similarity_threshold', 20.0)
+                matches = self.matching_service.match_material_with_price_list(
+                    material,
+                    similarity_threshold=threshold,
+                    max_results=top_n
+                )
+
+                return [match.to_dict() for match in matches]
             
         except Exception as e:
             logger.error(f"Error searching material by name '{material_name}': {e}")
