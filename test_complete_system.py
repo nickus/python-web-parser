@@ -81,9 +81,9 @@ def test_similarity_fix():
 
         print("\nРезультаты:")
         for i, result in enumerate(results, 1):
-            match = result.get('match', {})
-            print(f"{i}. {match.get('name', 'N/A')}")
-            print(f"   Артикул: {match.get('article', 'N/A')}")
+            price_item = result.get('price_item', {})
+            print(f"{i}. {price_item.get('name', 'N/A')}")
+            print(f"   Артикул: {price_item.get('article', 'N/A')}")
             print(f"   Схожесть: {result.get('similarity_percentage', 0):.1f}%")
             details = result.get('similarity_details', {})
             print(f"   - name_similarity: {details.get('name_similarity', 0):.1f}%")
@@ -93,7 +93,7 @@ def test_similarity_fix():
 
         # Проверка корректности
         if results:
-            top_match = results[0]['match']
+            top_match = results[0].get('price_item', {})
             if "3x2.5" in top_match.get('name', ''):
                 print("❌ ОШИБКА: Кабель 3x1.5 сопоставился с 3x2.5!")
                 return False

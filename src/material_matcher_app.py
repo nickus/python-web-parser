@@ -421,9 +421,11 @@ class MaterialMatcherApp:
                 )
             else:
                 # Fallback для старого API
+                # Используем название и как description для лучшего сопоставления
                 material = Material(
                     id="search_temp",
-                    name=material_name
+                    name=material_name,
+                    description=material_name  # Дублируем название в description для поиска
                 )
 
                 threshold = self.config.get('matching', {}).get('similarity_threshold', 20.0)
