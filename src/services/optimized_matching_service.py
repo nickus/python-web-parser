@@ -317,7 +317,7 @@ class OptimizedMatchingService:
         temp_material = Material(
             id="search_temp",
             name=material_name,
-            description=material_name,  # Используем название как description для лучшего сопоставления
+            description=None,  # Не дублируем название - description должен браться из прайс-листа
             # Пытаемся извлечь дополнительную информацию из названия
             manufacturer=None,
             equipment_code=None

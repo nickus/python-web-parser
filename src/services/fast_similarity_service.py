@@ -70,26 +70,24 @@ class FastSimilarityService:
             name_sim = 0.0
         similarities['name'] = name_sim
 
-        # Расчет похожести описаний - ВАЖНОЕ поле для технических характеристик
-        # Временная отладка
-        raw_mat_desc = material.description or ''
+        # Расчет похожести описаний - сравниваем название материала с description из прайс-листа
+        # Это дает лучшую точность, так как description содержит технические характеристики
         raw_price_desc = price_item.description or ''
-
-        material_desc = self._get_normalized_cached(raw_mat_desc, use_cache)
         price_desc = self._get_normalized_cached(raw_price_desc, use_cache)
 
-        if material_desc and price_desc:
-            desc_sim = self._calculate_text_similarity_fast(material_desc, price_desc)
+        # Если у материала есть свой description - используем его, иначе используем название
+        if material.description:
+            # Материал с полным описанием - сравниваем описания
+            material_text = self._get_normalized_cached(material.description, use_cache)
         else:
-            # Если нет description у одного из элементов - используем 0
+            # При поиске по названию - сравниваем название с description прайс-листа
+            material_text = material_name  # Уже нормализовано выше
+
+        if material_text and price_desc:
+            # Сравниваем название/описание материала с description из прайс-листа
+            desc_sim = self._calculate_text_similarity_fast(material_text, price_desc)
+        else:
             desc_sim = 0.0
-            # Логирование для отладки
-            if not material_desc and not price_desc:
-                pass  # Оба пустые
-            elif not material_desc:
-                pass  # Нет description у материала
-            elif not price_desc:
-                pass  # Нет description у прайс-листа
         similarities['description'] = desc_sim
 
         # Расчет похожести брендов/производителей
@@ -105,7 +103,7 @@ class FastSimilarityService:
         # Динамическое перераспределение весов с учетом description
         weights = self._calculate_dynamic_weights_with_description(
             has_name=bool(material_name and price_name),
-            has_description=bool(material_desc and price_desc),
+            has_description=bool(material_text and price_desc),
             has_brand=bool(material_brand and price_brand)
         )
 
