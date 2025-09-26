@@ -28,7 +28,8 @@
       "Bash(.venv\\Scripts\\python.exe test_etm_comprehensive.py:*)",
       "Bash(del test_etm_id_final.py)",
       "Bash(.venv\\Scripts\\python.exe main.py:*)",
-      "Bash(del test_large_catalog.json)"
+      "Bash(del test_large_catalog.json)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
