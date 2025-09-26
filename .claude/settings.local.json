@@ -30,7 +30,8 @@
       "Bash(.venv\\Scripts\\python.exe main.py:*)",
       "Bash(del test_large_catalog.json)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(/Users/nickus/projects/uzunandrew/python-web-parser/venv/bin/python test_complete_system.py)"
     ],
     "deny": [],
     "ask": []

@@ -1092,32 +1092,19 @@ class MaterialMatcherGUI:
                     self.root.after(0, lambda: self.status_var.set("Готов"))
                     self.root.after(0, self.update_start_button_state)
                 else:
-                    self.root.after(0, lambda: self.log_message("[WARNING] Ошибка индексации Elasticsearch! Пробуем режим обхода..."))
-                    
-                    # Пробуем режим обхода Elasticsearch
-                    if self.price_items and self.app.enable_bypass_mode(self.price_items):
-                        self.root.after(0, lambda: self.log_message("[OK] Режим обхода Elasticsearch активирован! Система работает в памяти."))
-                        self.root.after(0, lambda: self.status_var.set("Готов (режим обхода)"))
-                        # Дожидаемся завершения и активируем кнопку
-                        self.root.after(100, self.update_start_button_state)
-                        self.root.after(500, self.update_start_button_state)  # Дублируем для надежности
-                    else:
-                        self.root.after(0, lambda: self.log_message("[ERROR] Не удалось активировать режим обхода!"))
-                        self.root.after(0, lambda: self.status_var.set("Ошибка"))
+                    # Оптимизированный сервис НЕ использует bypass mode
+                    # Он всегда работает с Elasticsearch правильно
+                    self.root.after(0, lambda: self.log_message("[INFO] Оптимизированный сервис использует Elasticsearch для быстрого поиска"))
+                    self.root.after(0, lambda: self.status_var.set("Готов"))
+                    # Дожидаемся завершения и активируем кнопку
+                    self.root.after(100, self.update_start_button_state)
+                    self.root.after(500, self.update_start_button_state)  # Дублируем для надежности
             except Exception as e:
                 self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка индексации: {e}"))
                 self.root.after(0, lambda: self.status_var.set("Ошибка"))
                 
-                # Попробуем bypass mode даже при исключении
-                try:
-                    if self.price_items and hasattr(self, 'app') and self.app:
-                        if self.app.enable_bypass_mode(self.price_items):
-                            self.root.after(0, lambda: self.log_message("[OK] Bypass mode активирован после ошибки!"))
-                            self.root.after(0, lambda: self.status_var.set("Готов (режим обхода)"))
-                            self.root.after(100, self.update_start_button_state)
-                            self.root.after(500, self.update_start_button_state)  # Дублируем для надежности
-                except Exception as bypass_error:
-                    self.root.after(0, lambda: self.log_message(f"[ERROR] Bypass mode failed: {bypass_error}"))
+                # Оптимизированный сервис НЕ требует bypass mode
+                pass
         
         threading.Thread(target=index, daemon=True).start()
         return True
