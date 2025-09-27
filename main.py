@@ -422,13 +422,29 @@ def main():
             if matches:
                 print(f"\nНайдено {len(matches)} соответствий:")
                 for i, match in enumerate(matches, 1):
-                    print(f"\n{i}. {match['price_item']['material_name']}")
-                    print(f"   Поставщик: {match['price_item']['supplier']}")
-                    print(f"   Цена: {match['price_item']['price']} {match['price_item']['currency']}")
+                    price_item = match.get('price_item', {})
+                    # Используем правильные названия полей
+                    name = price_item.get('name') or price_item.get('material_name', 'N/A')
+                    item_id = price_item.get('id', 'N/A')
+                    brand = price_item.get('brand') or price_item.get('supplier', 'N/A')
+                    article = price_item.get('article', '')
+                    price = price_item.get('price')
+                    currency = price_item.get('currency', 'RUB')
+
+                    print(f"\n{i}. {name}")
+                    print(f"   ID: {item_id}")
+                    if article:
+                        print(f"   Артикул: {article}")
+                    print(f"   Бренд/Поставщик: {brand}")
+                    if price is not None:
+                        print(f"   Цена: {price} {currency}")
+                    else:
+                        print(f"   Цена: не указана")
                     print(f"   Похожесть: {match['similarity_percentage']:.1f}%")
                     print(f"   Детали похожести:")
                     for detail, value in match['similarity_details'].items():
-                        print(f"     - {detail}: {value:.1f}%")
+                        if value > 0:  # Показываем только ненулевые значения
+                            print(f"     - {detail}: {value:.1f}%")
             else:
                 print("Соответствия не найдены")
             return 0
