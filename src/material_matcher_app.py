@@ -16,7 +16,7 @@ from .models.material import Material, PriceListItem
 from .services.elasticsearch_service_optimized import OptimizedElasticsearchService
 from .services.fast_similarity_service import FastSimilarityService
 from .services.optimized_matching_service import OptimizedMatchingService
-from .utils.data_loader_fixed import MaterialLoader, PriceListLoader
+from .utils.data_loader import MaterialLoader, PriceListLoader
 from .utils.data_loader import DataExporter
 
 

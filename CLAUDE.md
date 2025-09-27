@@ -37,6 +37,10 @@ pip install -r requirements.txt
 # Start Elasticsearch (required for all operations)
 docker run -d --name elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:8.15.1
 
+# Alternative: Use docker-compose for full stack (includes Kibana)
+docker-compose up -d                    # Basic stack
+docker-compose --profile with-kibana up -d  # With Kibana for data visualization
+
 # Primary interfaces
 python main.py --gui                    # RECOMMENDED: Full GUI interface
 python main.py --init                   # Interactive CLI setup for first-time use
@@ -52,9 +56,11 @@ python main.py --setup --materials data/materials.csv --price-list data/price_li
 python main.py --search-material "Кабель ВВГНГ" --top-n 5
 python main.py --materials data/materials.csv --price-list data/price_list.csv --threshold 30 --format xlsx --output results.xlsx
 
-# Testing
-python test_app.py                      # Main application test
-python test_performance_optimizations.py # Performance testing
+# Testing (activate virtual environment first)
+.venv\Scripts\python.exe test_app.py                      # Main application test
+.venv\Scripts\python.exe test_performance_optimizations.py # Performance testing
+.venv\Scripts\python.exe test_complete_system.py          # Complete system integration test
+.venv\Scripts\python.exe test_gui_functionality.py        # GUI-specific tests
 ```
 
 ### Development Workflow
@@ -106,7 +112,14 @@ Uses fuzzywuzzy for string similarity, tokenization for partial matching, and se
 - **Configuration**: Use `config_optimized.json` for production environments (higher bulk_size, more workers)
 - **Logging**: Application logs to `material_matcher.log` with UTF-8 encoding
 - **Threading**: Configurable via `max_workers` in config (recommended: 4-6 for optimal performance)
-- **Testing**: Multiple test files exist (`test_*.py`) for different functionality areas
+- **Testing**: Multiple specialized test files exist for different functionality areas:
+  - `test_app.py` - Main application functionality test
+  - `test_complete_system.py` - Full system integration test
+  - `test_gui_functionality.py` - GUI-specific functionality tests
+  - `test_performance_optimizations.py` - Performance benchmarking
+  - `test_excel_loader.py` - Excel file loading tests
+  - `test_matching_algorithm.py` - Similarity algorithm tests
+  - Other specialized tests for specific components
 - **Russian Language Support**: Built-in Russian analyzer for improved text matching
 
 ## Code Style Rules

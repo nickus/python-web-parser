@@ -32,7 +32,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(/Users/nickus/projects/uzunandrew/python-web-parser/venv/bin/python test_complete_system.py)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(.venv\\Scripts\\python.exe test_new_etm_prices.py:*)",
+      "Bash(del test_new_etm_prices.py)",
+      "Bash(del __pycache__ /s /q)",
+      "Bash(del test_price_formatting.py)"
     ],
     "deny": [],
     "ask": []
