@@ -82,12 +82,23 @@ class MaterialMatcherApp:
             }
         }
     
-    def setup_indices(self) -> bool:
-        """Создание индексов в Elasticsearch"""
+    def setup_indices(self, force_recreate: bool = False) -> bool:
+        """
+        Создание индексов в Elasticsearch
+
+        Args:
+            force_recreate: Если True - пересоздает индекс (удаляет существующий)
+                           Если False - создает только если не существует
+        """
         logger.info("Setting up Elasticsearch indices...")
 
         # Используем метод оптимизированного сервиса
-        price_list_success = self.es_service.create_optimized_price_list_index()
+        if force_recreate:
+            # Принудительное пересоздание (для --setup)
+            price_list_success = self.es_service.recreate_price_list_index()
+        else:
+            # Создание только если не существует
+            price_list_success = self.es_service.create_optimized_price_list_index()
 
         if price_list_success:
             logger.info("Indices created successfully")
