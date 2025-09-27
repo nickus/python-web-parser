@@ -73,6 +73,9 @@ class OptimizedMatchingService:
         start_time = time.time()
         results = []
 
+        # Отладка: проверяем description материала в самом начале
+        logger.info(f"match_material_with_price_list called with material.description: {material.description}")
+
         # Формируем оптимальный поисковый запрос
         query = self._build_optimized_query(material)
 
@@ -114,6 +117,14 @@ class OptimizedMatchingService:
                     if similarity_percentage >= similarity_threshold:
                         # Комбинируем ES score и similarity для лучшего ранжирования
                         es_score = es_result.get('_score', 0)
+
+                        # Временная отладка перед созданием SearchResult
+                        if not hasattr(material, 'description'):
+                            logger.error(f"Material has no description attribute!")
+                        elif material.description is None:
+                            logger.warning(f"Material description is None for: {material.name}")
+                        else:
+                            logger.debug(f"Material has description: {material.description[:50]}")
 
                         search_result = SearchResult(
                             material=material,
@@ -306,6 +317,7 @@ class OptimizedMatchingService:
         temp_material = Material(
             id="search_temp",
             name=material_name,
+            description=None,  # Не дублируем название - description должен браться из прайс-листа
             # Пытаемся извлечь дополнительную информацию из названия
             manufacturer=None,
             equipment_code=None

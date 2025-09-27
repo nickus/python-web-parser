@@ -61,7 +61,7 @@ class FastSimilarityService:
 
         # БЫСТРЫЙ ПУТЬ: Если нормализованные названия идентичны
         if material_name == price_name and material_name:
-            return 100.0, {'name': 100.0, 'code': 100.0, 'brand': 100.0}
+            return 100.0, {'name': 100.0, 'description': 100.0, 'brand': 100.0}
 
         # Расчет похожести названий (основной критерий)
         if material_name and price_name:
@@ -70,15 +70,25 @@ class FastSimilarityService:
             name_sim = 0.0
         similarities['name'] = name_sim
 
-        # Расчет похожести кодов/артикулов
-        material_code = material.equipment_code or ''
-        price_article = price_item.article or ''
+        # Расчет похожести описаний - сравниваем название материала с description из прайс-листа
+        # Это дает лучшую точность, так как description содержит технические характеристики
+        raw_price_desc = price_item.description or ''
+        price_desc = self._get_normalized_cached(raw_price_desc, use_cache)
 
-        if material_code and price_article:
-            code_sim = self._calculate_code_similarity_fast(material_code, price_article)
+        # Если у материала есть свой description - используем его, иначе используем название
+        if material.description:
+            # Материал с полным описанием - сравниваем описания
+            material_text = self._get_normalized_cached(material.description, use_cache)
         else:
-            code_sim = 0.0
-        similarities['code'] = code_sim
+            # При поиске по названию - сравниваем название с description прайс-листа
+            material_text = material_name  # Уже нормализовано выше
+
+        if material_text and price_desc:
+            # Сравниваем название/описание материала с description из прайс-листа
+            desc_sim = self._calculate_text_similarity_fast(material_text, price_desc)
+        else:
+            desc_sim = 0.0
+        similarities['description'] = desc_sim
 
         # Расчет похожести брендов/производителей
         material_brand = material.manufacturer or material.brand or ''
@@ -90,17 +100,17 @@ class FastSimilarityService:
             brand_sim = 0.0
         similarities['brand'] = brand_sim
 
-        # Динамическое перераспределение весов
-        weights = self._calculate_dynamic_weights(
+        # Динамическое перераспределение весов с учетом description
+        weights = self._calculate_dynamic_weights_with_description(
             has_name=bool(material_name and price_name),
-            has_code=bool(material_code and price_article),
+            has_description=bool(material_text and price_desc),
             has_brand=bool(material_brand and price_brand)
         )
 
         # Общий процент похожести
         total_percentage = (
             similarities['name'] * weights['name'] +
-            similarities['code'] * weights['code'] +
+            similarities['description'] * weights['description'] +
             similarities['brand'] * weights['brand']
         )
 
@@ -252,6 +262,47 @@ class FastSimilarityService:
             weights['brand'] = 0
 
         return weights
+
+    def _calculate_dynamic_weights_with_description(self,
+                                                    has_name: bool,
+                                                    has_description: bool,
+                                                    has_brand: bool) -> Dict[str, float]:
+        """
+        Динамический расчет весов с учетом description
+
+        Адаптивная стратегия:
+        - Название - основной критерий (40-60%)
+        - Описание - важно для технических деталей (20-40%)
+        - Бренд - дополнительный критерий (10-20%)
+        """
+        if has_name and has_description and has_brand:
+            # Все поля доступны - оптимальное распределение
+            return {
+                'name': 0.50,           # Основной критерий
+                'description': 0.30,    # Технические характеристики
+                'brand': 0.20           # Производитель
+            }
+        elif has_name and has_description:
+            # Нет бренда
+            return {'name': 0.60, 'description': 0.40, 'brand': 0.0}
+        elif has_name and has_brand:
+            # Нет описания
+            return {'name': 0.70, 'description': 0.0, 'brand': 0.30}
+        elif has_description and has_brand:
+            # Нет названия (редкий случай)
+            return {'name': 0.0, 'description': 0.70, 'brand': 0.30}
+        elif has_name:
+            # Только название
+            return {'name': 1.0, 'description': 0.0, 'brand': 0.0}
+        elif has_description:
+            # Только описание
+            return {'name': 0.0, 'description': 1.0, 'brand': 0.0}
+        elif has_brand:
+            # Только бренд
+            return {'name': 0.0, 'description': 0.0, 'brand': 1.0}
+        else:
+            # Нет полей для сравнения - равное распределение
+            return {'name': 0.34, 'description': 0.33, 'brand': 0.33}
 
     def batch_calculate_similarities(self,
                                      material: Material,
