@@ -41,6 +41,16 @@ class FastSimilarityService:
         self._cache_hits = 0
         self._cache_misses = 0
 
+        # Паттерны для извлечения моделей и артикулов
+        self._model_patterns = [
+            r'RS-\d+',           # RS-485
+            r'DTM\s*\d+',        # DTM 1206
+            r'FireSec[\w\-]+',   # FireSec-Pro R3
+            r'R\d[\w\-]+',       # R3-MC, R3-Link
+            r'[A-Z]{2,}[\-\s]\d+[\w\-]*',  # Общий паттерн для моделей
+            r'\d+x[\d\.]+',      # Размеры кабелей 3x1.5
+        ]
+
     def calculate_fast_similarity(self,
                                   material: Material,
                                   price_item: PriceListItem,
@@ -62,6 +72,18 @@ class FastSimilarityService:
         # БЫСТРЫЙ ПУТЬ: Если нормализованные названия идентичны
         if material_name == price_name and material_name:
             return 100.0, {'name': 100.0, 'description': 100.0, 'brand': 100.0}
+
+        # ТОЧНОЕ СОВПАДЕНИЕ МОДЕЛИ/АРТИКУЛА - приоритет для слаботочки
+        material_models = self._extract_models(material.name or '')
+        # Ищем модели и в названии и в артикуле прайс-листа
+        price_models = self._extract_models(price_item.name or '')
+        if hasattr(price_item, 'article') and price_item.article:
+            price_models.update(self._extract_models(price_item.article))
+
+        if material_models and price_models:
+            # Если есть точное совпадение модели - высокий процент
+            if material_models & price_models:  # Пересечение множеств
+                return 95.0, {'name': 95.0, 'model_match': 100.0, 'brand': 90.0}
 
         # Расчет похожести названий (основной критерий)
         if material_name and price_name:
@@ -90,6 +112,21 @@ class FastSimilarityService:
             desc_sim = 0.0
         similarities['description'] = desc_sim
 
+        # Расчет похожести артикулов (для слаботочки критически важно)
+        article_sim = 0.0
+        if hasattr(price_item, 'article') and price_item.article:
+            # Сравниваем модель из материала с артикулом из прайс-листа
+            if material.equipment_code:
+                article_sim = self._calculate_code_similarity_fast(
+                    material.equipment_code, price_item.article
+                )
+            # Также проверяем наличие модели в артикуле
+            if material_models:
+                for model in material_models:
+                    if model.upper() in price_item.article.upper():
+                        article_sim = max(article_sim, 90.0)
+        similarities['article'] = article_sim
+
         # Расчет похожести брендов/производителей
         material_brand = material.manufacturer or material.brand or ''
         price_brand = price_item.brand or ''
@@ -100,18 +137,20 @@ class FastSimilarityService:
             brand_sim = 0.0
         similarities['brand'] = brand_sim
 
-        # Динамическое перераспределение весов с учетом description
+        # Динамическое перераспределение весов с учетом description и article
         weights = self._calculate_dynamic_weights_with_description(
             has_name=bool(material_name and price_name),
             has_description=bool(material_text and price_desc),
-            has_brand=bool(material_brand and price_brand)
+            has_brand=bool(material_brand and price_brand),
+            has_article=similarities.get('article', 0) > 0
         )
 
         # Общий процент похожести
         total_percentage = (
-            similarities['name'] * weights['name'] +
-            similarities['description'] * weights['description'] +
-            similarities['brand'] * weights['brand']
+            similarities['name'] * weights.get('name', 0) +
+            similarities['description'] * weights.get('description', 0) +
+            similarities.get('article', 0) * weights.get('article', 0) +
+            similarities['brand'] * weights.get('brand', 0)
         )
 
         return total_percentage, similarities
@@ -158,6 +197,9 @@ class FastSimilarityService:
         text = text.replace('×', 'x')
         text = text.replace('мм2', 'мм²')
         text = text.replace('кв.мм', 'мм²')
+
+        # НЕ нормализуем модели и артикулы (RS-485, DTM, FireSec и т.д.)
+        # Они должны сравниваться точно
 
         # Удаляем лишние пробелы (простой подход)
         text = ' '.join(text.split())
@@ -266,7 +308,8 @@ class FastSimilarityService:
     def _calculate_dynamic_weights_with_description(self,
                                                     has_name: bool,
                                                     has_description: bool,
-                                                    has_brand: bool) -> Dict[str, float]:
+                                                    has_brand: bool,
+                                                    has_article: bool = False) -> Dict[str, float]:
         """
         Динамический расчет весов с учетом description
 
@@ -275,11 +318,20 @@ class FastSimilarityService:
         - Описание - важно для технических деталей (20-40%)
         - Бренд - дополнительный критерий (10-20%)
         """
-        if has_name and has_description and has_brand:
+        if has_article:
+            # Если есть совпадение артикула - он важнее всего для слаботочки
+            return {
+                'name': 0.30,
+                'description': 0.20,
+                'article': 0.35,  # Артикул критически важен
+                'brand': 0.15
+            }
+        elif has_name and has_description and has_brand:
             # Все поля доступны - оптимальное распределение
             return {
                 'name': 0.50,           # Основной критерий
                 'description': 0.30,    # Технические характеристики
+                'article': 0.0,
                 'brand': 0.20           # Производитель
             }
         elif has_name and has_description:
@@ -351,6 +403,39 @@ class FastSimilarityService:
         self._cache_hits = 0
         self._cache_misses = 0
         logger.info("Cache cleared")
+
+    def _extract_models(self, text: str) -> set:
+        """
+        Извлекает модели и артикулы из текста
+        Особенно важно для слаботочного оборудования
+        """
+        if not text:
+            return set()
+
+        models = set()
+
+        # Ищем все паттерны моделей
+        for pattern in self._model_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            models.update(matches)
+
+        # Дополнительно ищем специфичные модели слаботочки
+        # RS-485, DTM 1206, FireSec-Pro R3, R3-MC, Рубеж-БИУ R3
+        special_patterns = [
+            r'RS-\d+',
+            r'DTM\s*\d+[A-Za-z]*\s*\d*',  # DTM 12B 17Ач
+            r'FireSec[\w\-]*',
+            r'R\d[\w\-]*',
+            r'Рубеж[\w\-]*',
+            r'БИУ[\w\-]*',
+            r'\d+[ВвV]\s*\d+[АаAч]+',  # 12В 17Ач
+        ]
+
+        for pattern in special_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            models.update([m.upper() for m in matches])  # Приводим к верхнему регистру для сравнения
+
+        return models
 
     def get_cache_stats(self) -> Dict[str, Any]:
         """Получение статистики кеша"""

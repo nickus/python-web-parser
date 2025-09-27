@@ -148,7 +148,10 @@ class PriceListItem:
         """Создание объекта PriceListItem из словаря"""
         updated_at = None
         if data.get('updated_at'):
-            updated_at = datetime.fromisoformat(data['updated_at'])
+            try:
+                updated_at = datetime.fromisoformat(data['updated_at'])
+            except (ValueError, TypeError):
+                updated_at = None
         
         # Определяем цену
         price = None
