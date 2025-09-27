@@ -218,7 +218,7 @@ def test_slabotochka_matching():
 
     # Индексируем данные в Elasticsearch
     print("Индексируем тестовые данные в Elasticsearch...")
-    app.setup_indices()
+    app.setup_indices()  # Не пересоздаем индекс, используем существующий
     app.es_service.index_price_list_optimized(test_price_items)
     time.sleep(2)  # Даем время на индексацию
 

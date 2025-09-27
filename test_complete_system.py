@@ -71,7 +71,7 @@ def test_similarity_fix():
     # Индексируем данные
     print("Индексируем тестовые данные...")
     if app.es_service.check_connection():
-        app.setup_indices()
+        app.setup_indices()  # Не пересоздаем индекс
         app.es_service.index_price_list_optimized(price_items)
         time.sleep(1)  # Даем время на индексацию
 
@@ -230,6 +230,91 @@ def test_csv_field_mapping():
             test_csv.unlink()
 
 
+def test_ppgng_frhf_cable():
+    """Тест для кабеля ППГнг(А)-FRHF 1x70"""
+    print("\n=== ТЕСТ 4: Сопоставление кабеля ППГнг(А)-FRHF 1x70 ===")
+
+    config = {
+        "elasticsearch": {
+            "host": "localhost",
+            "port": 9200,
+            "bulk_size": 1000
+        },
+        "matching": {
+            "similarity_threshold": 20.0,
+            "max_results_per_material": 5
+        }
+    }
+
+    app = MaterialMatcherApp(config)
+
+    if not app.es_service.check_connection():
+        print("⚠️ Elasticsearch недоступен")
+        return None
+
+    # Создаем тестовые данные
+    material = Material(
+        id="1",
+        name="Кабель силовой ППГнг(А)-FRHF 1x70",
+        equipment_code="ППГнг(А)-FRHF 1x70",
+        manufacturer="Кабельный завод"
+    )
+
+    price_items = [
+        PriceListItem(
+            id="p1",
+            name="Кабель силовой ППГнг(А)-FRHF 1x70 черный",
+            article="ППГнг(А)-FRHF-1x70",
+            brand="КабельПро"
+        ),
+        PriceListItem(
+            id="p2",
+            name="Кабель силовой ППГнг(А)-FRHF 1x95 черный",
+            article="ППГнг(А)-FRHF-1x95",
+            brand="КабельПро"
+        ),
+        PriceListItem(
+            id="p3",
+            name="Кабель силовой ППГнг(А)-FRHF 1x50 черный",
+            article="ППГнг(А)-FRHF-1x50",
+            brand="КабельПро"
+        )
+    ]
+
+    # Индексируем данные
+    print("Индексируем тестовые данные...")
+    app.setup_indices()  # Не пересоздаем индекс
+    app.es_service.index_price_list_optimized(price_items)
+    time.sleep(1)
+
+    # Ищем соответствия
+    print(f"Ищем соответствия для: {material.name}")
+    results = app.search_material_by_name(material.name, top_n=3)
+
+    print("\nРезультаты:")
+    for i, result in enumerate(results, 1):
+        price_item = result.get('price_item', {})
+        print(f"{i}. {price_item.get('name', 'N/A')}")
+        print(f"   Артикул: {price_item.get('article', 'N/A')}")
+        print(f"   Схожесть: {result.get('similarity_percentage', 0):.1f}%")
+
+    # Проверка корректности
+    if results:
+        top_match = results[0].get('price_item', {})
+        if "1x70" in top_match.get('name', ''):
+            print("\n✅ УСПЕХ: Кабель ППГнг(А)-FRHF 1x70 правильно сопоставлен")
+            return True
+        elif "1x95" in top_match.get('name', ''):
+            print("\n❌ ОШИБКА: Кабель 1x70 неправильно сопоставлен с 1x95!")
+            return False
+        elif "1x50" in top_match.get('name', ''):
+            print("\n❌ ОШИБКА: Кабель 1x70 неправильно сопоставлен с 1x50!")
+            return False
+    else:
+        print("❌ Результаты не найдены")
+        return False
+
+
 def main():
     """Запуск всех тестов"""
     print("=" * 60)
@@ -241,7 +326,7 @@ def main():
     # Тест 1: Исправление сопоставления
     result = test_similarity_fix()
     if result is not None:
-        results["Сопоставление кабелей"] = "✅ Пройден" if result else "❌ Провален"
+        results["Сопоставление кабелей ВВГНГ"] = "✅ Пройден" if result else "❌ Провален"
 
     # Тест 2: Производительность
     result = test_performance()
@@ -252,6 +337,11 @@ def main():
     result = test_csv_field_mapping()
     if result is not None:
         results["Маппинг CSV"] = "✅ Пройден" if result else "❌ Провален"
+
+    # Тест 4: Кабель ППГнг(А)-FRHF
+    result = test_ppgng_frhf_cable()
+    if result is not None:
+        results["Кабель ППГнг(А)-FRHF 1x70"] = "✅ Пройден" if result else "❌ Провален"
 
     # Итоговый отчет
     print("\n" + "=" * 60)

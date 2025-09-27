@@ -55,6 +55,20 @@ class OptimizedElasticsearchService:
 
         logger.info(f"Initialized OptimizedElasticsearchService to {host}:{port}")
 
+    def recreate_price_list_index(self) -> bool:
+        """
+        Принудительное пересоздание индекса (удаляет существующий)
+        Используется только при явном запросе пользователя (--setup)
+        """
+        try:
+            if self.es.indices.exists(index=self.price_list_index):
+                self.es.indices.delete(index=self.price_list_index)
+                logger.info(f"Deleted existing index: {self.price_list_index}")
+            return self.create_optimized_price_list_index()
+        except Exception as e:
+            logger.error(f"Failed to recreate index: {e}")
+            return False
+
     def create_optimized_price_list_index(self) -> bool:
         """
         Создание оптимизированного индекса для прайс-листа
@@ -229,12 +243,12 @@ class OptimizedElasticsearchService:
         }
 
         try:
-            # Удаляем старый индекс если существует
+            # Проверяем существует ли индекс
             if self.es.indices.exists(index=self.price_list_index):
-                self.es.indices.delete(index=self.price_list_index)
-                logger.info(f"Deleted existing index: {self.price_list_index}")
+                logger.info(f"Index already exists: {self.price_list_index}")
+                return True
 
-            # Создаем новый индекс
+            # Создаем новый индекс только если его нет
             self.es.indices.create(index=self.price_list_index, body=mapping)
             logger.info(f"Created optimized index: {self.price_list_index}")
             return True

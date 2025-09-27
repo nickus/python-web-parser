@@ -56,9 +56,9 @@ def interactive_setup():
     if app.es_service.check_connection():
         create_indices = input("Создать/пересоздать индексы Elasticsearch? (Y/n): ").lower().strip()
         if create_indices != 'n':
-            print("Создаем индексы...")
-            if app.setup_indices():
-                print("[OK] Индексы созданы успешно!")
+            print("Создаем индексы (если не существуют)...")
+            if app.setup_indices(force_recreate=False):
+                print("[OK] Индексы готовы к работе!")
             else:
                 print("[ERROR] Ошибка создания индексов!")
                 return False
@@ -406,11 +406,12 @@ def main():
         
         # Создание индексов
         if args.setup:
-            print("Создание индексов Elasticsearch...")
-            if app.setup_indices():
-                print("[OK] Индексы созданы успешно")
+            print("Пересоздание индексов Elasticsearch...")
+            # Принудительное пересоздание только для --setup
+            if app.setup_indices(force_recreate=True):
+                print("[OK] Индексы пересозданы успешно")
             else:
-                print("[ERROR] Ошибка создания индексов")
+                print("[ERROR] Ошибка пересоздания индексов")
                 return 1
         
         # Поиск конкретного материала
