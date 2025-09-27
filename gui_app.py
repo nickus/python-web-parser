@@ -150,6 +150,7 @@ class MaterialMatcherGUI:
         tools_menu.add_command(label="Настройки", command=self.show_settings)
         tools_menu.add_command(label="Проверить Elasticsearch", command=self.check_elasticsearch)
         tools_menu.add_command(label="Создать индексы", command=self.setup_indices)
+        tools_menu.add_command(label="🔄 Загрузить catalog.json в индекс", command=self.load_catalog_to_index)
         tools_menu.add_separator()
         tools_menu.add_command(label="📋 Копировать логи отладки", command=self.copy_debug_logs)
         tools_menu.add_command(label="📄 Показать окно логов", command=self.show_debug_logs_window)
@@ -717,6 +718,20 @@ class MaterialMatcherGUI:
                 self.root.after(0, lambda: self.log_message(
                     f"[SUCCESS] Загружены прайс-листы: {len(final_items)} уникальных позиций из {len(loaded_files)} файлов"))
 
+                # АВТОМАТИЧЕСКАЯ ИНДЕКСАЦИЯ В ELASTICSEARCH
+                if self.app and self.app.es_service.check_connection():
+                    self.root.after(0, lambda: self.status_var.set(f"Индексация {len(final_items)} товаров в Elasticsearch..."))
+                    self.root.after(0, lambda: self.log_message(f"[INFO] Начинаем автоматическую индексацию в Elasticsearch..."))
+
+                    # Индексируем в Elasticsearch
+                    if self.app.es_service.bulk_index_price_list(final_items):
+                        self.root.after(0, lambda: self.log_message("[OK] Данные успешно проиндексированы в Elasticsearch!"))
+                        self.root.after(0, lambda: self.status_var.set("Готов (индекс обновлен)"))
+                    else:
+                        self.root.after(0, lambda: self.log_message("[WARNING] Не удалось проиндексировать в Elasticsearch"))
+                else:
+                    self.root.after(0, lambda: self.log_message("[INFO] Elasticsearch недоступен, данные загружены только в память"))
+
             else:
                 self.root.after(0, self.hide_pricelist_progress)  # Скрываем прогресс при ошибке
                 self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить данные ни из одного файла"))
@@ -882,7 +897,19 @@ class MaterialMatcherGUI:
                 # Обновляем интерфейс
                 self.root.after(0, lambda: self.update_pricelist_info(len(all_price_items)))
                 self.root.after(0, lambda: self.status_var.set(f"Загружено позиций прайс-листа: {len(all_price_items)} из {len(pricelist_files)} файлов"))
-            
+
+                # АВТОМАТИЧЕСКАЯ ИНДЕКСАЦИЯ В ELASTICSEARCH
+                if self.app and self.app.es_service.check_connection():
+                    self.root.after(0, lambda: self.status_var.set(f"Индексация {len(all_price_items)} товаров в Elasticsearch..."))
+                    self.root.after(0, lambda: self.log_message(f"[INFO] Автоматическая индексация в Elasticsearch..."))
+
+                    # Индексируем в Elasticsearch
+                    if self.app.es_service.bulk_index_price_list(all_price_items):
+                        self.root.after(0, lambda: self.log_message("[OK] Данные успешно проиндексированы в Elasticsearch!"))
+                        self.root.after(0, lambda: self.status_var.set("Готов (индекс обновлен)"))
+                    else:
+                        self.root.after(0, lambda: self.log_message("[WARNING] Не удалось проиндексировать в Elasticsearch"))
+
             # Запускаем в потоке
             thread = threading.Thread(target=load_pricelist_thread)
             thread.daemon = True
@@ -2341,6 +2368,79 @@ class MaterialMatcherGUI:
         
         # Запускаем автозагрузку в отдельном потоке
         threading.Thread(target=auto_load_thread, daemon=True).start()
+
+    def load_catalog_to_index(self):
+        """Загрузка catalog.json и индексация в Elasticsearch"""
+        def load_and_index():
+            try:
+                # Проверяем наличие файла catalog.json
+                catalog_path = Path("catalog.json")
+                if not catalog_path.exists():
+                    self.root.after(0, lambda: messagebox.showerror(
+                        "Ошибка",
+                        "Файл catalog.json не найден!\n\n" +
+                        "Убедитесь, что файл catalog.json находится в корневой папке проекта."
+                    ))
+                    return
+
+                # Инициализируем приложение если нужно
+                if self.app is None:
+                    self._init_app()
+
+                # Шаг 1: Создаем/пересоздаем индексы
+                self.root.after(0, lambda: self.status_var.set("Создание индексов..."))
+                self.root.after(0, lambda: self.log_message("[INFO] Создание индексов Elasticsearch..."))
+
+                if not self.app.setup_indices(force_recreate=True):
+                    self.root.after(0, lambda: self.log_message("[ERROR] Ошибка создания индексов!"))
+                    self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось создать индексы Elasticsearch"))
+                    return
+
+                self.root.after(0, lambda: self.log_message("[OK] Индексы созданы успешно"))
+
+                # Шаг 2: Загружаем catalog.json
+                self.root.after(0, lambda: self.status_var.set("Загрузка catalog.json..."))
+                self.root.after(0, lambda: self.log_message(f"[INFO] Загрузка catalog.json ({catalog_path.stat().st_size // 1024 // 1024} MB)..."))
+
+                price_items = self.app.load_price_list("catalog.json")
+                if not price_items:
+                    self.root.after(0, lambda: self.log_message("[ERROR] Не удалось загрузить catalog.json!"))
+                    self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось загрузить catalog.json"))
+                    return
+
+                self.root.after(0, lambda: self.log_message(f"[OK] Загружено {len(price_items)} товаров из catalog.json"))
+
+                # Шаг 3: Индексируем в Elasticsearch
+                self.root.after(0, lambda: self.status_var.set(f"Индексация {len(price_items)} товаров..."))
+                self.root.after(0, lambda: self.log_message(f"[INFO] Начинаем индексацию {len(price_items)} товаров в Elasticsearch..."))
+
+                # Используем bulk индексацию
+                if self.app.es_service.bulk_index_price_list(price_items):
+                    self.root.after(0, lambda: self.log_message("[OK] Индексация завершена успешно!"))
+                    self.root.after(0, lambda: self.status_var.set("Готов"))
+
+                    # Обновляем данные в GUI
+                    self.price_items = price_items
+                    self.root.after(0, lambda: self.update_pricelist_preview(price_items))
+
+                    self.root.after(0, lambda: messagebox.showinfo(
+                        "Успешно",
+                        f"✅ Успешно загружено и проиндексировано:\n\n" +
+                        f"• {len(price_items)} товаров из catalog.json\n" +
+                        f"• Индекс Elasticsearch обновлен\n" +
+                        f"• Система готова к поиску"
+                    ))
+                else:
+                    self.root.after(0, lambda: self.log_message("[ERROR] Ошибка индексации в Elasticsearch!"))
+                    self.root.after(0, lambda: messagebox.showerror("Ошибка", "Не удалось проиндексировать данные в Elasticsearch"))
+
+            except Exception as e:
+                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка при загрузке catalog.json: {e}"))
+                self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Ошибка при загрузке catalog.json:\n{str(e)}"))
+                self.root.after(0, lambda: self.status_var.set("Ошибка"))
+
+        # Запускаем в отдельном потоке
+        threading.Thread(target=load_and_index, daemon=True).start()
 
     # Методы переключения режимов просмотра удалены - используется только древовидный режим
     
