@@ -20,7 +20,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from src.material_matcher_app import MaterialMatcherApp
 from src.utils.json_formatter import MatchingResultFormatter
 from src.utils.debug_logger import get_debug_logger, init_debug_logging
-from src.ui.modern_table_view import ModernTableView
 from src.services.etm_api_service import get_etm_service
 
 
@@ -1184,7 +1183,8 @@ class MaterialMatcherGUI:
                     self.root.after(0, lambda: self.log_message("[STOP] Сопоставление отменено пользователем"))
                 
             except Exception as e:
-                self.root.after(0, lambda: self.log_message(f"[ERROR] Ошибка сопоставления: {e}"))
+                error_msg = f"[ERROR] Ошибка сопоставления: {e}"
+                self.root.after(0, lambda: self.log_message(error_msg))
             finally:
                 # Восстанавливаем UI
                 self.root.after(0, lambda: self.start_button.config(state="normal"))

@@ -350,3 +350,46 @@ class OptimizedMatchingService:
             'hit_rate': (self._cache_hits / (self._cache_hits + self._cache_misses) * 100)
                         if (self._cache_hits + self._cache_misses) > 0 else 0
         }
+
+    def get_matching_statistics(self, results: Dict[str, List[SearchResult]]) -> Dict[str, Any]:
+        """
+        Получение статистики по результатам сопоставления
+
+        Args:
+            results: Результаты сопоставления материалов
+
+        Returns:
+            Словарь со статистикой
+        """
+        total_materials = len(results)
+        materials_with_matches = sum(1 for matches in results.values() if matches)
+        total_matches = sum(len(matches) for matches in results.values())
+
+        # Статистика по процентам похожести
+        all_percentages = []
+        for matches in results.values():
+            all_percentages.extend([match.similarity_percentage for match in matches])
+
+        statistics = {
+            'total_materials': total_materials,
+            'materials_with_matches': materials_with_matches,
+            'materials_without_matches': total_materials - materials_with_matches,
+            'match_rate': (materials_with_matches / total_materials * 100) if total_materials > 0 else 0,
+            'total_matches': total_matches,
+            'average_matches_per_material': total_matches / total_materials if total_materials > 0 else 0
+        }
+
+        if all_percentages:
+            statistics.update({
+                'average_similarity': sum(all_percentages) / len(all_percentages),
+                'max_similarity': max(all_percentages),
+                'min_similarity': min(all_percentages)
+            })
+        else:
+            statistics.update({
+                'average_similarity': 0,
+                'max_similarity': 0,
+                'min_similarity': 0
+            })
+
+        return statistics

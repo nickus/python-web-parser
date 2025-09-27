@@ -51,7 +51,7 @@ class OptimizedElasticsearchService:
 
         # Названия индексов
         self.materials_index = 'materials_optimized'
-        self.price_list_index = 'price_list_optimized'
+        self.price_list_index = 'price_list'
 
         logger.info(f"Initialized OptimizedElasticsearchService to {host}:{port}")
 
