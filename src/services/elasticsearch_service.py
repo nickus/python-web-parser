@@ -555,7 +555,7 @@ class ElasticsearchService:
                         {
                             "multi_match": {
                                 "query": query,
-                                "fields": ["material_name^4", "material_name.raw^3", "description^2", "full_text"],
+                                "fields": ["material_name^4", "material_name.raw^3", "article^3", "description^2", "full_text"],
                                 "type": "best_fields",
                                 "fuzziness": "AUTO",
                                 "boost": 2.0
@@ -564,7 +564,7 @@ class ElasticsearchService:
                         {
                             "multi_match": {
                                 "query": query,
-                                "fields": ["brand^2", "category", "supplier"],
+                                "fields": ["brand^2", "article^2", "category", "supplier"],
                                 "type": "phrase",
                                 "boost": 1.5
                             }
